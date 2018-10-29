@@ -13,5 +13,5 @@ RUN dotnet publish -c Debug -o out
 FROM microsoft/dotnet:2.1-sdk 
 WORKDIR /app
 COPY --from=build-env /app/ .
-ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5000;https://0.0.0.0:5001"]
+ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:4000"]
 

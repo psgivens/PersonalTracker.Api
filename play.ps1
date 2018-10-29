@@ -7,7 +7,7 @@
 Invoke-WebRequest `
   -Method Get `
   -SkipCertificateCheck `
-  -Uri "https://localhost:5001/api/ping"
+  -Uri "http://localhost:3000/api/ping"
 
 $body="=test"
 Invoke-WebRequest `
@@ -15,7 +15,7 @@ Invoke-WebRequest `
   -Body $body `
   -ContentType 'application/x-www-form-urlencoded' `
   -SkipCertificateCheck `
-  -Uri "https://localhost:5001/api/ping"
+  -Uri "http://localhost:3000/api/ping"
 
 
 #######################
@@ -25,7 +25,7 @@ Invoke-WebRequest `
 Invoke-WebRequest `
   -Method Get `
   -SkipCertificateCheck `
-  -Uri "https://localhost:5001/api/pingdto"
+  -Uri "http://localhost:3000/api/pingdto"
 
 $body = @{
     Value='Success'
@@ -36,7 +36,7 @@ Invoke-WebRequest `
   -Headers $headers `
   -ContentType 'application/json' `
   -SkipCertificateCheck `
-  -Uri "https://localhost:5001/api/pingdto"
+  -Uri "http://localhost:3000/api/pingdto"
 
 
 

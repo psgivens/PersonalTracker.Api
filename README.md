@@ -76,8 +76,8 @@ This can run with or without autoreloading
     sudo docker run `
       --name watch-pomo-rapi `
       --rm -it `
-      -p 5000:5000 `
-      -p 5001:5001 `
+      -p 4000:4000 `
+      -p 4001:4001 `
       --network pomodoro-net `
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/:/app/ `
       pomodoro-watch-rapi

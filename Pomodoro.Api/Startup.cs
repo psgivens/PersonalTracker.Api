@@ -12,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Pomodoro.Api.Models;
+using IdentityServer4;
+using IdentityServer4.AccessTokenValidation;
 
 namespace Pomodoro.Api
 {
@@ -19,6 +21,7 @@ namespace Pomodoro.Api
     {
         public Startup(IConfiguration configuration)
         {
+            TlsHack.Hack();
             Configuration = configuration;
         }
 
@@ -26,7 +29,23 @@ namespace Pomodoro.Api
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {
+        {            
+            services.AddIdentityServer(opt => opt.IssuerUri = "http://localhost:7000");
+
+            services.AddAuthentication(opt =>
+                {
+                    opt.DefaultScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                    opt.DefaultAuthenticateScheme = IdentityServerAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddIdentityServerAuthentication(opt =>
+                {
+                    opt.Authority = "http://localhost:7000";
+                    opt.RequireHttpsMetadata = false;
+                    opt.ApiName = "api1";
+                });
+
+            services.AddCors();
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             var connectionString = Configuration["PomodoroDbContextSettings:ConnectionString"];
@@ -48,6 +67,15 @@ namespace Pomodoro.Api
             }
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+
+            app.UseCors(builder
+                => builder
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .WithOrigins("http://localhost:2000"));
+
             app.UseMvc();
         }
     }

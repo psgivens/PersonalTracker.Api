@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Pomodoro.Api.Controllers
@@ -10,6 +11,9 @@ namespace Pomodoro.Api.Controllers
     [ApiController]
     public class PingController : ControllerBase
     {
+        public PingController(){
+            TlsHack.Hack();
+        }
         // GET api/ping
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
