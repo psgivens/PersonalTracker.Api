@@ -1,8 +1,7 @@
-
 using System.Collections.Generic;
 using IdentityServer4.Models;
 
-namespace idsvr
+namespace IdServer
 {
     public static class Configuration
     {

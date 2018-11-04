@@ -29,8 +29,9 @@ namespace Pomodoro.Api
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
-        {            
-            services.AddIdentityServer(opt => opt.IssuerUri = "http://localhost:7000");
+        {
+            // Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true; //To show detail of error and see the problem
+            services.AddIdentityServer(opt => opt.IssuerUri = "http://pomodoro-idserver");
 
             services.AddAuthentication(opt =>
                 {
@@ -39,7 +40,7 @@ namespace Pomodoro.Api
                 })
                 .AddIdentityServerAuthentication(opt =>
                 {
-                    opt.Authority = "http://localhost:7000";
+                    opt.Authority = "http://pomodoro-idserver";
                     opt.RequireHttpsMetadata = false;
                     opt.ApiName = "api1";
                 });
@@ -74,7 +75,7 @@ namespace Pomodoro.Api
                 => builder
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins("http://localhost:2000"));
+                    .WithOrigins("https://localhost,https://localhost:2001,https://localhost:2001"));
 
             app.UseMvc();
         }

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using IdentityServer4;
 
-namespace idsvr
+namespace IdServer
 {
     public class Startup
     {
@@ -16,10 +16,21 @@ namespace idsvr
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddIdentityServer()
+            // Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true; //To show detail of error and see the problem
+            services.AddIdentityServer(opt => opt.IssuerUri = "http://pomodoro-idserver")
                 .AddDeveloperSigningCredential()
                 .AddInMemoryApiResources(Configuration.GetApiResources())
                 .AddInMemoryClients(Configuration.GetClients());
+
+            // services.AddAntiforgery(
+            //     options =>
+            //     {
+            //         options.Cookie.Name = "_af";
+            //         options.Cookie.HttpOnly = true;
+            //         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            //         options.HeaderName = "X-XSRF-TOKEN";
+            //     }
+            // );                
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

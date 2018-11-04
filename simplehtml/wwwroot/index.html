@@ -6,14 +6,14 @@
 </head>
 
 <body>
-    Test Client
+    Test Client!
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" />
     </script>
     <script>
         function CallService(token) {
             $.ajax({
                 type: 'GET',
-                url: 'http://localhost:3000/api/values',
+                url: '/api/values',
                 crossDomain: true,
                 timeout: 2000,
                 beforeSend: function (xhr) { xhr.setRequestHeader('Authorization', 'Bearer ' + token) }
@@ -26,7 +26,7 @@
         function GetToken() {
             $.ajax({
                 type: 'POST',
-                url: 'http://localhost:7000/connect/token',
+                url: '/connect/token',
                 crossDomain: true,
                 timeout: 2000,
                 data: {
