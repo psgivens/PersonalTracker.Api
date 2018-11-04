@@ -1,41 +1,54 @@
 # PersonalTracker.Api
 
-### Setup
+PersonalTracker.Api is a reference implementation of using microservices with a 
+browser based application. It currently has two services, each backed by a database.
 
-# https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1
+* The Pomodoro.Api service manages a logs of time blocks of the user.
+* The IdServer manages authentication and authorization.
+
+In addition to these there are containers which only exist in development.
+
+* LocalProxy, serves static pages, and makes all requests to look like they are served from the same machine. In production, this will be replaced by a Storage Bucket with CDN for static pages, and a Kubernetes Service for the routing.
+* pgsql, hosts a local postgresql database. In production, this would be replaced by a hosted database
+* pgadmin4, is a web-based sql explorer for postgresql. It is pulled directly from dockerhub.
+
+All containers are connected via one bridged docker network, pomodoro-net
+
+During run, source code directories are mapped via docker volumes
+
+Here are some URLS to use as sanity checks
+* http://localhost/index.html - Is the proxy/static server running?
+* http://localhost:2002/.well-known/openid-configuration - Is IdServer running?
+* http://localhost/.well-known/openid-configuration - Can the proxy access IdServer?
+* http://localhost:2003/api/ping - Is the api server running?
+* http://localhost/api/ping - Can the proxy acccess the api server?
+* http://localhost/testclient.html - Use debug tools to see if this calls id and api.
+
+## Setup
+
+### Seting up dotnet core applications
+Instructions for creating dotnet apps can be found at:
+[aspnetcore-2.1](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1)
 
     dotnet new webapi -o Pomodoro.Api
-    
-### Create the migration
-
-    # Required dotnet-sdk-2.1.300
 
     dotnet ef migrations add InitialMigration
 
     dotnet ef database update
 
-### Replace the volume
-    sudo docker volume rm pomo-pgsql-volume
+### Setting up the docker infrastrucutre
+
+    # Create the volume for the database
     sudo docker volume create pomo-pgsql-volume
 
-### Create the network
+    # Remove the volume for the database
+    sudo docker volume rm pomo-pgsql-volume
+
+    # Create the network
     docker network create --driver bridge pomodoro-net
   
-### Build the pgsql database
-
+    # Build the pgsql database
     docker build -t pomodoro-pgsql -f pgsql/Dockerfile ./pgsql
-
-### Build the pomodoro container
-
-    sudo docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
-
-    sudo docker build -t pomodoro-watch-rapi -f Pomodoro.Api/watch.Dockerfile Pomodoro.Api
-
-    sudo docker build -t pomodoro-idserver -f IdServer/Dockerfile IdServer
-
-    sudo docker build -t pomodoro-simplehtml -f simplehtml/Dockerfile simplehtml
-
-### Running the database container
 
     # run the database container
     # https://hub.docker.com/_/postgres/
@@ -69,8 +82,38 @@
       -d `
       dpage/pgadmin4
 
+    # Create and run the reverse proxy
+    docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
+    sudo docker run `
+      --name pomodoro-reverse-proxy `
+      --network pomodoro-net `
+      -d `
+      --rm `
+      -p 80:80 `
+      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+      myrevprox 
+    
+    docker exec -it pomodoro-reverse-proxy /bin/bash
 
-### Running the application
+    docker container stop pomodoro-reverse-proxy 
+
+### Take inventory
+    clear
+    docker network list | grep -E "NAME|pomodoro"
+    docker volume list | grep -E "NAME|pomodoro"
+    docker container list -a | grep -E "NAMES|rapi|pgadmin|pomo|dbg"
+
+    sudo docker image list
+
+### Build the application containers
+
+    sudo docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
+
+    sudo docker build -t pomodoro-watch-rapi -f Pomodoro.Api/watch.Dockerfile Pomodoro.Api
+
+    sudo docker build -t pomodoro-idserver -f IdServer/Dockerfile IdServer
+
+### Run the application containers
 This can run with or without autoreloading
 
     $myip = (hostname -I).split(' ') | ?{ $_ -match '^192' }
@@ -82,7 +125,6 @@ This can run with or without autoreloading
       --name watch-pomo-rapi `
       --rm -d `
       -p 2003:80 `
-      --add-host="localhost:$myip" `
       --network pomodoro-net `
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/:/app/ `
       pomodoro-watch-rapi
@@ -133,45 +175,5 @@ This can run with or without autoreloading
       --network pomodoro-net `
       -v ~/Repos/psgivens/PersonalTracker.Api/simplehtml/:/app/ `
       pomodoro-simplehtml
-
-### Take inventory
-    clear
-    sudo docker network list | grep -E "NAME|pomodoro"
-    sudo docker volume list | grep -E "NAME|pomodoro"
-    sudo docker container list -a | grep -E "NAMES|rapi|pgadmin|pomo|dbg"
-
-    sudo docker image list
-
-
-
-
-### Reverse Proxy
-
-    # https://bitbucket.org/mimiz33/apache-proxy
-
-    $myip = (hostname -I).split(' ') | ?{ $_ -match '^192' }
-
-    docker run -it --rm --add-host="localhost:$myip" -p 8080:80 httpd /bin/bash
-
-    docker run -it --rm --add-host="localhost:$myip" -p 8080:80 rgoyard/apache-proxy /bin/bash
-
-    docker container stop my_reverse_proxy 
-    docker build -t myrevprox -f local/Dockerfile ./local
-    sudo docker run `
-      --name my_reverse_proxy `
-      --network pomodoro-net `
-      -d `
-      --rm `
-      --add-host="localhost:$myip" `
-      -p 80:80 `
-      myrevprox 
-    
-    docker exec -it my_reverse_proxy /bin/bash
-
-    docker container stop my_reverse_proxy 
-
-
-
-
 
 

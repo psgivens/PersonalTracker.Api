@@ -30,8 +30,21 @@ namespace Pomodoro.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(System.IO.Directory.GetCurrentDirectory())
+                .AddEnvironmentVariables()
+                .AddJsonFile("idServerSettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            var idServerSettings = config.GetSection("idServerSettings");
+            string issuerUri = idServerSettings.GetValue<string>("IssuerUri");
+            string idServerAuthority = idServerSettings.GetValue<string>("Authority");
+
+            services.AddSingleton<IConfiguration>(Configuration);
+
             // Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true; //To show detail of error and see the problem
-            services.AddIdentityServer(opt => opt.IssuerUri = "http://pomodoro-idserver");
+            services.AddIdentityServer(opt => opt.IssuerUri = issuerUri);
 
             services.AddAuthentication(opt =>
                 {
@@ -40,7 +53,7 @@ namespace Pomodoro.Api
                 })
                 .AddIdentityServerAuthentication(opt =>
                 {
-                    opt.Authority = "http://pomodoro-idserver";
+                    opt.Authority = idServerAuthority;
                     opt.RequireHttpsMetadata = false;
                     opt.ApiName = "api1";
                 });

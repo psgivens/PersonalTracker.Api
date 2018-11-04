@@ -23,6 +23,8 @@ namespace IdServer
                 .AddEnvironmentVariables()
                 .AddJsonFile("certificate.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"certificate.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("idServerSettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .Build();
 
             var certificateSettings = config.GetSection("certificateSettings");
@@ -30,6 +32,9 @@ namespace IdServer
             string certificatePassword = certificateSettings.GetValue<string>("password");
 
             var certificate = new X509Certificate2(certificateFileName, certificatePassword);
+
+            var idServerSettings = config.GetSection("idServerSettings");
+            string issuerUri = idServerSettings.GetValue<string>("IssuerUri");
 
             var host = WebHost.CreateDefaultBuilder(args)
                 .UseKestrel(
