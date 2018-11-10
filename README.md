@@ -61,6 +61,8 @@ This infrastructure section contains common commands for these containers
 * pgadmin4
 * Local reverse proxy
 
+.
+
     # Create the volume for the database
     docker volume create pomo-pgsql-volume
 
