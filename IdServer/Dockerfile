@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-sdk AS build-env
+FROM pomodoro-dotnet-stage AS build-env
 WORKDIR /app
 
 # copy csproj and restore as distinct layers

@@ -21,9 +21,9 @@ namespace IdServer
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddEnvironmentVariables()
-                .AddJsonFile("certificate.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("secrets/certificate.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"certificate.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
-                .AddJsonFile("idServerSettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("config/idServerSettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .Build();
 

@@ -7,6 +7,7 @@
 
 <body>
     Test Client!
+    <div id="messages" />
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" />
     </script>
     <script>
@@ -18,11 +19,14 @@
                 timeout: 2000,
                 beforeSend: function (xhr) { xhr.setRequestHeader('Authorization', 'Bearer ' + token) }
             })
-                .done(function (data) {
-                    console.log(data);
-                });
-        }
+            .done(function (data) {
+                console.log(data);
 
+                const valuesDiv = document.createElement("div")
+                $(valuesDiv).html(data)
+                $("#messages").append(valuesDiv)
+            });
+        }
         function GetToken() {
             $.ajax({
                 type: 'POST',
@@ -38,6 +42,11 @@
             })
             .done(function (data) {
                 console.log("Got token: " + data.access_token);
+
+                const tokenDiv = document.createElement("div")
+                $(tokenDiv).html("Got token: " + data.access_token)
+                $("#messages").append(tokenDiv)
+
                 CallService(data.access_token);
             });
         }
@@ -46,6 +55,8 @@
             GetToken();
         });
     </script>
+    
+    
 </body>
 
 </html>

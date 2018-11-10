@@ -18,7 +18,7 @@ namespace Pomodoro.Api.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-            return "Success from Ping Controller".Split(" ");
+            return "Success from Ping Controller!!!".Split(" ");
         }
 
         // GET api/ping/5

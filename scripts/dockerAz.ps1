@@ -20,13 +20,6 @@ $acrCreds
 
 
 
-
-
-
-
-
-
-
 echo $acrCreds | docker login psgivens.azurecr.io -u $acrName --password-stdin
 
 echo $acrCreds 
