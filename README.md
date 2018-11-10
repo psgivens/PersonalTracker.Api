@@ -26,6 +26,10 @@ Here are some URLS to use as sanity checks
 
 ## Setup
 
+Set a local environment variable POMODORO_REPOS to the folder containing your Pomodoro Repos 
+
+    $env:POMODORO_REPOS= "{0}/Repos" -f (ls -d ~)
+
 ### Seting up dotnet core applications
 Instructions for creating dotnet apps can be found at:
 [aspnetcore-2.1](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1)
@@ -109,10 +113,22 @@ This infrastructure section contains common commands for these containers
       dpage/pgadmin4
 
     # Create and run the reverse proxy
+    #
     docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
+    #
+    # Get the IP of the localmachine
+    #
+    $regex=[regex] '\d+\.\d+\.\d+\.\d+'
+    $interface=ip -family inet -o addr show docker0
+    $hostip=$regex.Match($interface).Value.Trim()
+    $addhost="{0}:{1}" -f  "localmachine", $hostip
+    #
+    # Run the docker image
+    #
     docker run `
       --name pomodoro-reverse-proxy `
       --network pomodoro-net `
+      --add-host $addhost `
       -d `
       --rm `
       -p 80:80 `
