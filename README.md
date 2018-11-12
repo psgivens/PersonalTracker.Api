@@ -1,7 +1,8 @@
 # PersonalTracker.Api
 
-PersonalTracker.Api is a reference implementation of using microservices with a 
-browser based application. It currently has two services, each backed by a database.
+## Introduction
+
+PersonalTracker.Api is a reference implementation of using microservices with a browser based application. It currently has two services, each backed by a database.
 
 * The Pomodoro.Api service manages a logs of time blocks of the user.
 * The IdServer manages authentication and authorization.
@@ -17,12 +18,28 @@ All containers are connected via one bridged docker network, pomodoro-net
 During run, source code directories are mapped via docker volumes
 
 Here are some URLS to use as sanity checks
+
 * http://localhost/index.html - Is the proxy/static server running?
 * http://localhost:2002/.well-known/openid-configuration - Is IdServer running?
 * http://localhost/.well-known/openid-configuration - Can the proxy access IdServer?
 * http://localhost:2003/api/ping - Is the api server running?
 * http://localhost/api/ping - Can the proxy acccess the api server?
 * http://localhost/testclient.html - Use debug tools to see if this calls id and api.
+
+The proxy has been changed. The above testclient and index won't work. To get them to work remove the last line of LocalProxy/conf/proxy.conf
+
+* http://localhost:3000 - The react app running on the local system
+* http://localhost - Proxy of the react app running on the local system
+
+Ports used in this project
+
+* 2002 - id server
+* 2003 - pomodoro api 
+* 2004 - ping api 
+
+### Local Proxy Server
+
+LocalProxy/conf/proxy.conf defines the forwarding rules in the proxy
 
 ## Setup
 
@@ -57,6 +74,16 @@ In addition, we want to plan for the future for configuration files. We create t
 * In launch commands, map your source folder to the docker container. 
 * * Map 'src' folder
 * * Map 'wwwroot' folder
+* Map the configuration and secrets
+* * config
+* * secrets
+
+# Running
+
+* Setup infrastructure
+* Take inventory
+* Build
+* Run containers
 
 ### Setting up the docker infrastrucutre
 
@@ -64,7 +91,6 @@ This infrastructure section contains common commands for these containers
 * Pomodoro Postgresql Database
 * pgadmin4
 * Local reverse proxy
-
 .
 
     # Create the volume for the database
@@ -115,6 +141,7 @@ This infrastructure section contains common commands for these containers
     # Create and run the reverse proxy
     #
     docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
+
     #
     # Get the IP of the localmachine
     #
@@ -133,8 +160,11 @@ This infrastructure section contains common commands for these containers
       --rm `
       -p 80:80 `
       -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/conf/:/conf/ `
       myrevprox 
     
+    docker exec -it pomodoro-reverse-proxy apache2ctl restart
+
     docker exec -it pomodoro-reverse-proxy /bin/bash
 
     docker container stop pomodoro-reverse-proxy 
@@ -153,16 +183,41 @@ This infrastructure section contains common commands for these containers
 
     docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
 
+    docker build -t pomodoro-ping-rapi -f Ping.Api/watch.Dockerfile Ping.Api
+
     docker build -t pomodoro-watch-rapi -f Pomodoro.Api/watch.Dockerfile Pomodoro.Api
 
     docker build -t pomodoro-idserver -f IdServer/watch.Dockerfile IdServer
 
 ### Run the application containers
-This can run with or without autoreloading
+
+Here are commands for these containers
+
+* pomo-ping-rapi - ping rest api
+* watch-pomo-rapi - pomodoro rest api
+* pomodoro-idserver - idserver
 
     $myip = (hostname -I).split(' ') | ?{ $_ -match '^192' }
 
     clear
+
+    # Cannot attach a debugger, but can have the app auto reload during development.
+    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+    docker run `
+      --name pomo-ping-rapi `
+      --rm -d `
+      -p 2004:80 `
+      --network pomodoro-net `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/src/:/app/src/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/wwwroot/:/app/wwwroot/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
+      pomodoro-ping-rapi
+
+    docker logs pomo-ping-rapi 
+
+    docker container stop pomo-ping-rapi
+
     # Cannot attach a debugger, but can have the app auto reload during development.
     # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
     docker run `
@@ -216,23 +271,15 @@ This can run with or without autoreloading
 
     docker exec -it pomodoro-idserver bash
 
-    clear
-    # Cannot attach a debugger, but can have the app auto reload during development.
-    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-    docker run `
-      --name pomodoro-simplehtml `
-      --rm -d `
-      -p 2001:80 `
-      --network pomodoro-net `
-      -v ~/Repos/psgivens/PersonalTracker.Api/simplehtml/:/app/ `
-      pomodoro-simplehtml
+# Kubernetes
+
+I am not yet running these in Kubernetes.
 
 ### Working with Minikube
 
     minikube start
 
     minikube stop
-     
 
 ### Working with Azure
 

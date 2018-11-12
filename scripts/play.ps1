@@ -1,5 +1,7 @@
 
 
+$domain='http://localhost'
+
 #######################
 # Simple ping controller
 #######################
@@ -7,7 +9,7 @@
 Invoke-WebRequest `
   -Method Get `
   -SkipCertificateCheck `
-  -Uri "http://localhost:3000/api/ping"
+  -Uri "$domain/api/ping"
 
 $body="=test"
 Invoke-WebRequest `
@@ -15,7 +17,7 @@ Invoke-WebRequest `
   -Body $body `
   -ContentType 'application/x-www-form-urlencoded' `
   -SkipCertificateCheck `
-  -Uri "http://localhost:3000/api/ping"
+  -Uri "$domain/api/ping"
 
 
 #######################
@@ -25,7 +27,7 @@ Invoke-WebRequest `
 Invoke-WebRequest `
   -Method Get `
   -SkipCertificateCheck `
-  -Uri "http://localhost:3000/api/pingdto"
+  -Uri "$domain/api/pingdto"
 
 $body = @{
     Value='Success'
@@ -36,7 +38,7 @@ Invoke-WebRequest `
   -Headers $headers `
   -ContentType 'application/json' `
   -SkipCertificateCheck `
-  -Uri "http://localhost:3000/api/pingdto"
+  -Uri "$domain/api/pingdto"
 
 
 
