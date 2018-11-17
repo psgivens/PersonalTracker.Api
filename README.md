@@ -36,6 +36,8 @@ Ports used in this project
 * 2002 - id server
 * 2003 - pomodoro api 
 * 2004 - ping api 
+* 2525 - mountebank
+* 300x - mountebank imposters matching other 200x. 
 
 ### Local Proxy Server
 
@@ -169,6 +171,81 @@ This infrastructure section contains common commands for these containers
 
     docker container stop pomodoro-reverse-proxy 
 
+### Redirect traffic through mountebank for recording
+
+* 3002 - id server
+* 3003 - pomodoro api 
+* 3004 - ping api 
+
+    #
+    # Run Mountebank
+    #
+    docker run `
+      --name pomodoro-mountebank `
+      --network pomodoro-net `
+      -d `
+      --rm `
+      -p 2525:2525 `
+      -p 3001:3001 `
+      -p 3002:3002 `
+      -p 3003:3003 `
+      -p 3004:3004 `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/conf/:/mocks/conf/ `
+      pomodoro-mountebank 
+
+    docker logs pomodoro-mountebank
+
+    docker container stop pomodoro-mountebank
+
+    docker exec -it pomodoro-mountebank /bin/sh
+
+    ############
+    # Playing with mountebank
+    ###############
+    # Checkout the hardcoded imposter
+    Invoke-WebRequest -Uri "http://localhost:3001"
+
+    # Non-mock ping api service
+    Invoke-RestMethod -Uri "http://localhost:2004/api/ping"
+
+    # Mock passthrough ping api service
+    Invoke-RestMethod -Uri "http://localhost:3004/api/ping"
+
+    # Imposter definitions
+    Invoke-WebRequest -Uri "http://localhost:2525/imposters" | %{ $_.content }
+
+    # Definition of hardcoded imposter
+    Invoke-WebRequest -Uri "http://localhost:2525/imposters/3001" | %{ $_.content }
+
+    # Definition of mock passthrough ping api service
+    Invoke-WebRequest -Uri "http://localhost:2525/imposters/3004" | %{ $_.content }
+
+
+
+
+    #
+    # Get the IP of the localmachine
+    #
+    $regex=[regex] '\d+\.\d+\.\d+\.\d+'
+    $interface=ip -family inet -o addr show docker0
+    $hostip=$regex.Match($interface).Value.Trim()
+    $addhost="{0}:{1}" -f  "localmachine", $hostip
+    #
+    # Run the docker image
+    #
+    docker run `
+      --name pomodoro-reverse-proxy `
+      --network pomodoro-net `
+      --add-host $addhost `
+      -d `
+      --rm `
+      -p 80:80 `
+      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/conf/:/conf/ `
+      myrevprox 
+    
+    docker exec -it pomodoro-reverse-proxy apache2ctl restart
+
 ### Take inventory
     clear
     docker network list | grep -E "NAME|pomodoro"
@@ -178,6 +255,8 @@ This infrastructure section contains common commands for these containers
     docker image list
 
 ### Build the application containers
+
+    docker build -t pomodoro-mountebank -f Mocks/Dockerfile Mocks
 
     docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
 
