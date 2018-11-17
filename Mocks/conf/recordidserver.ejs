@@ -1,0 +1,12 @@
+{
+  "port": 3002,
+  "protocol": "http",
+  "stubs": [{
+    "responses": [{
+      "proxy": { 
+        "to": "http://pomodoro-idserver",
+        "mode": "proxyAlways"
+       }
+    }]
+  }]
+}

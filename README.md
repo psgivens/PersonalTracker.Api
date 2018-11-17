@@ -241,10 +241,20 @@ This infrastructure section contains common commands for these containers
       --rm `
       -p 80:80 `
       -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/conf/:/conf/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/proxy_conf/:/conf/ `
       myrevprox 
+
+    docker logs pomodoro-reverse-proxy 
     
     docker exec -it pomodoro-reverse-proxy apache2ctl restart
+
+    docker exec -it pomodoro-reverse-proxy /bin/bash
+
+    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/error.log
+
+    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
+
+    docker container stop pomodoro-reverse-proxy 
 
 ### Take inventory
     clear
