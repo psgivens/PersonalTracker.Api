@@ -1,6 +1,6 @@
 {
   "idServerSettings": {
-    "IssuerUri": "http://Ping-idserver",
-    "Authority": "http://Ping-idserver"
+    "IssuerUri": "http://pomodoro-idserver",
+    "Authority": "http://pomodoro-idserver"
   }
 }

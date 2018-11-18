@@ -244,6 +244,8 @@ This infrastructure section contains common commands for these containers
       -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/proxy_conf/:/conf/ `
       myrevprox 
 
+    docker container stop pomodoro-reverse-proxy 
+
     docker logs pomodoro-reverse-proxy 
     
     docker exec -it pomodoro-reverse-proxy apache2ctl restart
@@ -254,7 +256,27 @@ This infrastructure section contains common commands for these containers
 
     docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
 
-    docker container stop pomodoro-reverse-proxy 
+
+
+
+    # Cannot attach a debugger, but can have the app auto reload during development.
+    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+    docker run `
+      --name watch-pomo-rapi `
+      --rm -d `
+      -p 2003:80 `
+      --network pomodoro-net `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/api_conf/:/app/config/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+      pomodoro-watch-rapi
+
+    docker container stop watch-pomo-rapi
+
+    docker logs watch-pomo-rapi 
+
+    docker logs watch-pomo-rapi --follow
 
 ### Take inventory
     clear
@@ -320,9 +342,9 @@ Here are commands for these containers
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
       pomodoro-watch-rapi
 
-    docker logs watch-pomo-rapi 
-
     docker container stop watch-pomo-rapi
+
+    docker logs watch-pomo-rapi 
     
     # Does not currently work
     docker run `
@@ -359,6 +381,17 @@ Here are commands for these containers
     docker logs pomodoro-idserver
 
     docker exec -it pomodoro-idserver bash
+
+### Exploring pomodoro-net
+
+    docker pull mcr.microsoft.com/powershell:6.1.0-rc.1-alpine-3.8
+
+    docker run `
+      --name pomodoro-pwsh `
+      --rm `
+      -it `
+      --network pomodoro-net `
+      mcr.microsoft.com/powershell:6.1.0-rc.1-alpine-3.8 pwsh
 
 # Kubernetes
 

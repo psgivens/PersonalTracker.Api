@@ -1,0 +1,6 @@
+{
+  "idServerSettings": {
+    "IssuerUri": "http://ping-idserver",
+    "Authority": "http://pomodoro-mountebank:3002"
+  }
+}

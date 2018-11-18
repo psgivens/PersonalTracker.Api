@@ -3,7 +3,7 @@
 mb $@ &
 
 # Wait for mb to boot and create the log file.
-sleep 1
+sleep 3
 
 tail /mocks/mb.log -f
 
