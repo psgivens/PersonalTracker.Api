@@ -190,7 +190,7 @@ This infrastructure section contains common commands for these containers
       -p 3002:3002 `
       -p 3003:3003 `
       -p 3004:3004 `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/conf/:/mocks/conf/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/conf/:/mocks/conf/ `
       pomodoro-mountebank 
 
     docker logs pomodoro-mountebank
@@ -210,6 +210,12 @@ This infrastructure section contains common commands for these containers
 
     # Mock passthrough ping api service
     Invoke-RestMethod -Uri "http://localhost:3004/api/ping"
+
+    # Mock passthrough ping api service
+    $headers = @{ 'x-mountebank'=$true }
+    Invoke-RestMethod -Headers $headers -Uri "http://localhost:3003/api/ping"
+
+    Invoke-RestMethod -Uri "http://localhost:3003/api/ping"
 
     # Imposter definitions
     Invoke-WebRequest -Uri "http://localhost:2525/imposters" | %{ $_.content }
@@ -241,7 +247,7 @@ This infrastructure section contains common commands for these containers
       --rm `
       -p 80:80 `
       -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/proxy_conf/:/conf/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/proxy_conf/:/conf/ `
       myrevprox 
 
     docker container stop pomodoro-reverse-proxy 
@@ -257,8 +263,6 @@ This infrastructure section contains common commands for these containers
     docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
 
 
-
-
     # Cannot attach a debugger, but can have the app auto reload during development.
     # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
     docker run `
@@ -268,7 +272,7 @@ This infrastructure section contains common commands for these containers
       --network pomodoro-net `
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/api_conf/:/app/config/ `
+      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
       -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
       pomodoro-watch-rapi
 
@@ -288,7 +292,7 @@ This infrastructure section contains common commands for these containers
 
 ### Build the application containers
 
-    docker build -t pomodoro-mountebank -f Mocks/Dockerfile Mocks
+    docker build -t pomodoro-mountebank -f Mountebank/Dockerfile Mountebank
 
     docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
 

@@ -9,4 +9,5 @@ RUN chmod u+x /mocks/startup.sh
 
 WORKDIR /mocks/
 
-ENTRYPOINT [ "/mocks/startup.sh", "--configfile", "/mocks/conf/imposters.ejs"]
+ENTRYPOINT [ "/mocks/startup.sh" ]
+CMD [ "--configfile", "/mocks/conf/imposters.ejs"]

@@ -1,0 +1,26 @@
+{
+    "predicates": [
+      {
+        "or": [
+            {
+                "exists": {
+                    "headers": {
+                        "x-mountebank": true
+                    }
+                }
+            },{
+                "exists": {
+                    "query": {
+                        "ismountebank": true
+                    }
+                }
+            }
+        ]
+      }
+    ],
+    "responses": [
+        { "is": { "body": {
+            "Served-by-Mountebank": "The truth is revealed!!!"
+        } } }
+    ]
+}

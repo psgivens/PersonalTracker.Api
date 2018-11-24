@@ -2,14 +2,28 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
-            "command": "dotnet",
+            "label": "stopall",
+            "command": "./scripts/stopall.ps1",
             "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/temp/hello/hello.csproj"
-            ],
-            "problemMatcher": "$msCompile"
+            "args": []
+        },
+        {
+            "label": "actual",
+            "command": "./scripts/startactual.ps1",
+            "type": "process",
+            "args": []
+        },
+        {
+            "label": "proxied",
+            "command": "./scripts/startproxied.ps1",
+            "type": "process",
+            "args": []
+        },
+        {
+            "label": "replay",
+            "command": "./scripts/startreplay.ps1",
+            "type": "process",
+            "args": []
         }
     ]
 }

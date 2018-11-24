@@ -1,11 +1,13 @@
 {
-  "port": 3002,
+  "port": 3003,
   "protocol": "http",
-  "stubs": [{
+  "stubs": [
+    <% include isMountebank.ejs %>,
+    {
     "predicates": [],
     "responses": [{
       "proxy": { 
-        "to": "http://pomodoro-idserver",
+        "to": "http://watch-pomo-rapi",
         "mode": "proxyAlways",
         "predicateGenerators": [{
           "matches": {
@@ -13,7 +15,7 @@
             "path": true
           }
         }]
-       }
+      }
     }]
-  }]
+  }]  
 }

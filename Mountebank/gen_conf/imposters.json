@@ -1,0 +1,243 @@
+{
+  "imposters": [
+    {
+      "protocol": "http",
+      "port": 3001,
+      "stubs": [
+        {
+          "responses": [
+            {
+              "is": {
+                "body": "54"
+              }
+            },
+            {
+              "is": {
+                "body": "21"
+              }
+            },
+            {
+              "is": {
+                "body": "0"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "protocol": "http",
+      "port": 3002,
+      "stubs": [
+        {
+          "predicates": [
+            {
+              "or": [
+                {
+                  "exists": {
+                    "headers": {
+                      "x-mountebank": true
+                    }
+                  }
+                },
+                {
+                  "exists": {
+                    "query": {
+                      "ismountebank": true
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "body": {
+                  "Served-by-Mountebank": "The truth is revealed!!!"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "predicates": [
+            {
+              "deepEquals": {
+                "body": "client_id=client&client_secret=secret&grant_type=client_credentials&scopes=api1"
+              }
+            },
+            {
+              "deepEquals": {
+                "method": "POST"
+              }
+            },
+            {
+              "deepEquals": {
+                "path": "/connect/token"
+              }
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": {
+                  "Date": "Fri, 23 Nov 2018 23:11:28 GMT",
+                  "Content-Type": "application/json; charset=UTF-8",
+                  "Cache-Control": "no-store, no-cache, max-age=0",
+                  "Pragma": "no-cache",
+                  "Transfer-Encoding": "chunked",
+                  "Connection": "close"
+                },
+                "body": "{\"access_token\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6ImFjMjk5ZTcyN2M4ZWM3MjAxMzcxM2E4YjJkNGQwMzQ0IiwidHlwIjoiSldUIn0.eyJuYmYiOjE1NDMwMTQ2ODksImV4cCI6MTU0MzAxODI4OSwiaXNzIjoiaHR0cDovL3BvbW9kb3JvLWlkc2VydmVyIiwiYXVkIjpbImh0dHA6Ly9wb21vZG9yby1pZHNlcnZlci9yZXNvdXJjZXMiLCJhcGkxIl0sImNsaWVudF9pZCI6ImNsaWVudCIsInNjb3BlIjpbImFwaTEiXX0.ffrhqzs1MmrNUPkWXF3PGaSSvMPb9_V7R73x5y8jfBZg3_kBrq8RcCsFaFXJ51HXIgifotqUl2N4nHbYakgvS1MgQTci2Bed2mujD8Hvwy6WD956Bg9klG0yfUQExwIfjYzEElCxdahrTKBRVPJ7ja28pRqXeM9FOcU4pzFzTBDf89TnXtA8V3402QJL-LT4zJie6KKUeChxrRjv2GcaZoyksKdBQxRaakA93OHyIrF8Gf2mitIUsWRHUhCRn6A4rzJiTeN9vznrSKupVgQb7bIoCe3t0Rlc04B7yVLGo9gB2uwkqV7eU-sfazbaFd-E565WIIZdP3vSPCAQsuO_-w\",\"expires_in\":3600,\"token_type\":\"Bearer\"}",
+                "_mode": "text",
+                "_proxyResponseTime": 420
+              }
+            }
+          ]
+        },
+        {
+          "predicates": [
+            {
+              "deepEquals": {
+                "body": ""
+              }
+            },
+            {
+              "deepEquals": {
+                "method": "GET"
+              }
+            },
+            {
+              "deepEquals": {
+                "path": "/.well-known/openid-configuration"
+              }
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": {
+                  "Connection": "close",
+                  "Date": "Fri, 23 Nov 2018 23:11:33 GMT",
+                  "Content-Type": "application/json; charset=UTF-8",
+                  "Transfer-Encoding": "chunked"
+                },
+                "body": "{\"issuer\":\"http://pomodoro-idserver\",\"jwks_uri\":\"http://pomodoro-idserver/.well-known/openid-configuration/jwks\",\"authorization_endpoint\":\"http://pomodoro-idserver/connect/authorize\",\"token_endpoint\":\"http://pomodoro-idserver/connect/token\",\"userinfo_endpoint\":\"http://pomodoro-idserver/connect/userinfo\",\"end_session_endpoint\":\"http://pomodoro-idserver/connect/endsession\",\"check_session_iframe\":\"http://pomodoro-idserver/connect/checksession\",\"revocation_endpoint\":\"http://pomodoro-idserver/connect/revocation\",\"introspection_endpoint\":\"http://pomodoro-idserver/connect/introspect\",\"frontchannel_logout_supported\":true,\"frontchannel_logout_session_supported\":true,\"backchannel_logout_supported\":true,\"backchannel_logout_session_supported\":true,\"scopes_supported\":[\"api1\",\"offline_access\"],\"claims_supported\":[],\"grant_types_supported\":[\"authorization_code\",\"client_credentials\",\"refresh_token\",\"implicit\"],\"response_types_supported\":[\"code\",\"token\",\"id_token\",\"id_token token\",\"code id_token\",\"code token\",\"code id_token token\"],\"response_modes_supported\":[\"form_post\",\"query\",\"fragment\"],\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\"],\"subject_types_supported\":[\"public\"],\"id_token_signing_alg_values_supported\":[\"RS256\"],\"code_challenge_methods_supported\":[\"plain\",\"S256\"]}",
+                "_mode": "text",
+                "_proxyResponseTime": 40
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "protocol": "http",
+      "port": 3003,
+      "stubs": [
+        {
+          "predicates": [
+            {
+              "or": [
+                {
+                  "exists": {
+                    "headers": {
+                      "x-mountebank": true
+                    }
+                  }
+                },
+                {
+                  "exists": {
+                    "query": {
+                      "ismountebank": true
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "body": {
+                  "Served-by-Mountebank": "The truth is revealed!!!"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "predicates": [
+            {
+              "deepEquals": {
+                "method": "GET"
+              }
+            },
+            {
+              "deepEquals": {
+                "path": "/api/values"
+              }
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": {
+                  "Date": "Fri, 23 Nov 2018 23:11:33 GMT",
+                  "Content-Type": "application/json; charset=utf-8",
+                  "Server": "Kestrel",
+                  "Transfer-Encoding": "chunked",
+                  "Connection": "close"
+                },
+                "body": "[\"value3\",\"value2\"]",
+                "_mode": "text",
+                "_proxyResponseTime": 684
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "protocol": "http",
+      "port": 3004,
+      "stubs": [
+        {
+          "predicates": [
+            {
+              "or": [
+                {
+                  "exists": {
+                    "headers": {
+                      "x-mountebank": true
+                    }
+                  }
+                },
+                {
+                  "exists": {
+                    "query": {
+                      "ismountebank": true
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "responses": [
+            {
+              "is": {
+                "body": {
+                  "Served-by-Mountebank": "The truth is revealed!!!"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
