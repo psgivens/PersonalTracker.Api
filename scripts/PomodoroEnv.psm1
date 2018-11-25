@@ -23,14 +23,16 @@ Function Start-PomEnv {
     Starts all microservices. Localhost will point to the html files in the reverse
     proxy container.
 .EXAMPLE
-    Start-PomEnv -Proxy
+    Start-PomEnv -Proxy 
     Starts all microservices, and the mountebank container. Localhost will point to 
     the html files in the reverse proxy container (Client:default). Mountebank is 
     configured to record everything. 
 .EXAMPLE
-    Start-PomEnv -Replay webapp
+    Start-PomEnv -Replay webapp -Client localmachine
     Only starts the reverse proxy container and mountebank. Mountebank is configured 
-    to use the configuration file contained in Mocks/webapp/mountebankconf/imposters.json
+    to use the configuration file contained in Mocks/webapp/mountebankconf/imposters.json. 
+    'Client localmachine' configures the reverse proxy to look for a web app running on 
+    port 3000 on the host machine. 
 .NOTES
     Author: Phillip Scott Givens
     Date:   November 25th, 2018
