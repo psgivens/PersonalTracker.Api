@@ -295,6 +295,22 @@ Function Connect-PomDocker {
     docker exec -it $Container /bin/sh
 }
 
+Function Start-DockerBash {
+    param(
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "watch-pomo-rapi", 
+            "pomodoro-idserver", 
+            "pomodoro-reverse-proxy", 
+            "pomodoro-mountebank", 
+            "pomo-pgsql",
+            "pomo-pgadmin"
+            )] 
+        [string]$Container
+    )
+    docker run -it --entrypoint /bin/sh $Container
+}
+
 
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Stop-PomEnv
