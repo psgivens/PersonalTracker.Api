@@ -75,6 +75,19 @@ Function Start-PomEnv {
             -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
             -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
             pomodoro-watch-rapi
+
+        # Cannot attach a debugger, but can have the app auto reload during development.
+        # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+        docker run `
+            --name pomo-ping-rapi `
+            --rm -d `
+            -p 2004:80 `
+            --network pomodoro-net `
+            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/src/:/app/src/ `
+            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/wwwroot/:/app/wwwroot/ `
+            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
+            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
+            pomodoro-ping-rapi
         
         Write-Host "Starting pomodoro-idserver..."
         # Cannot attach a debugger, but can have the app auto reload during development.
@@ -107,6 +120,7 @@ Function Start-PomEnv {
             -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/conf/:/mocks/conf/ `
             -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/gen_conf/:/mocks/gen_conf/ `
             pomodoro-mountebank 
+
     } elseif ($Replay) {
     
         $Replay = $Replay.ToLower()
@@ -236,7 +250,8 @@ Function Stop-PomEnv {
     "pomodoro-reverse-proxy",
     "pomodoro-idserver",
     "pomodoro-mountebank",
-    "watch-pomo-rapi") | ForEach {
+    "watch-pomo-rapi",
+    "pomo-ping-rapi") | ForEach-Object {
         if (docker container list | grep $_) {
             Write-Host ("Stopping {0}" -f $_)
             docker container stop $_

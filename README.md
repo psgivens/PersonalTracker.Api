@@ -49,6 +49,18 @@ Set a local environment variable POMODORO_REPOS to the folder containing your Po
 
     $env:POMODORO_REPOS= "{0}/Repos" -f (ls -d ~)
 
+Link the powershell modules to the psmodule path
+
+    $MyPSModulePath = "{0}/.local/share/powershell/Modules" -f (ls -d ~)
+    mkdir -p $MyPSModulePath/PomodoroEnv
+    cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
+
+
+### Generate Proxies
+
+    Start-PomEnv -Client default -Proxy
+    ./scripts/run.ps1
+
 ### Seting up dotnet core applications
 Instructions for creating dotnet apps can be found at:
 [aspnetcore-2.1](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1)
