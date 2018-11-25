@@ -43,8 +43,9 @@ Ports used in this project
 
 LocalProxy/conf/proxy.conf defines the forwarding rules in the proxy
 
-## Setup
+# Setup
 
+## Environment
 Set a local environment variable POMODORO_REPOS to the folder containing your Pomodoro Repos 
 
     $env:POMODORO_REPOS= "{0}/Repos" -f (ls -d ~)
@@ -55,12 +56,21 @@ Link the powershell modules to the psmodule path
     mkdir -p $MyPSModulePath/PomodoroEnv
     cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
 
+Once the PomodoroEnv.psm1 is installed you can use the cmdlets to start and stop the environment. 
+
+    Get-Help Start-PomEnv -Full
+    Get-Help Stop-PomEnv -Full
+    Get-Help Connect-PomDocker -Full
+    Get-Help Start-PgAdmin -Full
+    Get-Help Stop-PgAdmin -Full
+    Get-Help Start-DockerBash -Full
 
 ### Generate Proxies
 
     Start-PomEnv -Client default -Proxy
     ./scripts/run.ps1
 
+## dotnet core projects
 ### Seting up dotnet core applications
 Instructions for creating dotnet apps can be found at:
 [aspnetcore-2.1](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1)
@@ -105,7 +115,10 @@ This infrastructure section contains common commands for these containers
 * Pomodoro Postgresql Database
 * pgadmin4
 * Local reverse proxy
-.
+
+Commans for setting up the environment can be found in PomodoroEnv.psm1
+
+Working with volumes
 
     # Create the volume for the database
     docker volume create pomo-pgsql-volume
@@ -113,75 +126,36 @@ This infrastructure section contains common commands for these containers
     # Remove the volume for the database
     docker volume rm pomo-pgsql-volume
 
+Working with network
+
     # Create the network
     docker network create --driver bridge pomodoro-net
   
+Working with pgsql container
+
     # Build the pgsql database
     docker build -t pomodoro-pgsql -f pgsql/Dockerfile ./pgsql
-
-    # run the database container
-    # https://hub.docker.com/_/postgres/
-    clear
-    docker run `
-      --name pomo-pgsql `
-      --mount source=pomo-pgsql-volume,target=/var/lib/postgresql/data/pgdata `
-      --network pomodoro-net `
-      --rm `
-      -p 5432:5432 `
-      -e POSTGRES_PASSWORD=Password1 `
-      -e POSTGRES_USER=samplesam `
-      -e POSTGRES_DB=defaultdb `
-      -e PGDATA=/var/lib/postgresql/data/pgdata `
-      -d `
-      pomodoro-pgsql
 
     # run bash in the database container
     docker exec -it pomo-pgsql bash
 
+    # alternative
+    Connect-PomDocker -Container pomo-pgsql
+
     # While logged into database container
     psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
 
-    # Use pgadmin to explore the database
-    docker run `
-      -p 5002:80 `
-      --rm `
-      --name pomo-pgadmin `
-      --network pomodoro-net `
-      -e "PGADMIN_DEFAULT_EMAIL=user@domain.com" `
-      -e "PGADMIN_DEFAULT_PASSWORD=Password1" `
-      -d `
-      dpage/pgadmin4
+    # PGADMIN_DEFAULT_EMAIL=user@domain.com
+    # PGADMIN_DEFAULT_PASSWORD=Password1
+    Start-PgAdmin
+
+Some extras for the reverse proxy
 
     # Create and run the reverse proxy
     #
     docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
-
-    #
-    # Get the IP of the localmachine
-    #
-    $regex=[regex] '\d+\.\d+\.\d+\.\d+'
-    $interface=ip -family inet -o addr show docker0
-    $hostip=$regex.Match($interface).Value.Trim()
-    $addhost="{0}:{1}" -f  "localmachine", $hostip
-    #
-    # Run the docker image
-    #
-    docker run `
-      --name pomodoro-reverse-proxy `
-      --network pomodoro-net `
-      --add-host $addhost `
-      -d `
-      --rm `
-      -p 80:80 `
-      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/conf/:/conf/ `
-      myrevprox 
     
     docker exec -it pomodoro-reverse-proxy apache2ctl restart
-
-    docker exec -it pomodoro-reverse-proxy /bin/bash
-
-    docker container stop pomodoro-reverse-proxy 
 
 ### Redirect traffic through mountebank for recording
 
@@ -189,27 +163,7 @@ This infrastructure section contains common commands for these containers
 * 3003 - pomodoro api 
 * 3004 - ping api 
 
-    #
-    # Run Mountebank
-    #
-    docker run `
-      --name pomodoro-mountebank `
-      --network pomodoro-net `
-      -d `
-      --rm `
-      -p 2525:2525 `
-      -p 3001:3001 `
-      -p 3002:3002 `
-      -p 3003:3003 `
-      -p 3004:3004 `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/conf/:/mocks/conf/ `
-      pomodoro-mountebank 
-
-    docker logs pomodoro-mountebank
-
-    docker container stop pomodoro-mountebank
-
-    docker exec -it pomodoro-mountebank /bin/sh
+.
 
     ############
     # Playing with mountebank
@@ -238,61 +192,11 @@ This infrastructure section contains common commands for these containers
     # Definition of mock passthrough ping api service
     Invoke-WebRequest -Uri "http://localhost:2525/imposters/3004" | %{ $_.content }
 
-
-
-
-    #
-    # Get the IP of the localmachine
-    #
-    $regex=[regex] '\d+\.\d+\.\d+\.\d+'
-    $interface=ip -family inet -o addr show docker0
-    $hostip=$regex.Match($interface).Value.Trim()
-    $addhost="{0}:{1}" -f  "localmachine", $hostip
-    #
-    # Run the docker image
-    #
-    docker run `
-      --name pomodoro-reverse-proxy `
-      --network pomodoro-net `
-      --add-host $addhost `
-      -d `
-      --rm `
-      -p 80:80 `
-      -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/proxy_conf/:/conf/ `
-      myrevprox 
-
-    docker container stop pomodoro-reverse-proxy 
-
-    docker logs pomodoro-reverse-proxy 
-    
-    docker exec -it pomodoro-reverse-proxy apache2ctl restart
-
-    docker exec -it pomodoro-reverse-proxy /bin/bash
+Extra commands for reverse-proxy
 
     docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/error.log
 
     docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
-
-
-    # Cannot attach a debugger, but can have the app auto reload during development.
-    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-    docker run `
-      --name watch-pomo-rapi `
-      --rm -d `
-      -p 2003:80 `
-      --network pomodoro-net `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
-      pomodoro-watch-rapi
-
-    docker container stop watch-pomo-rapi
-
-    docker logs watch-pomo-rapi 
-
-    docker logs watch-pomo-rapi --follow
 
 ### Take inventory
     clear
@@ -316,89 +220,8 @@ This infrastructure section contains common commands for these containers
 
     docker build -t pomodoro-idserver -f IdServer/watch.Dockerfile IdServer
 
-### Run the application containers
 
-Here are commands for these containers
-
-* pomo-ping-rapi - ping rest api
-* watch-pomo-rapi - pomodoro rest api
-* pomodoro-idserver - idserver
-
-    $myip = (hostname -I).split(' ') | ?{ $_ -match '^192' }
-
-    clear
-
-    # Cannot attach a debugger, but can have the app auto reload during development.
-    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-    docker run `
-      --name pomo-ping-rapi `
-      --rm -d `
-      -p 2004:80 `
-      --network pomodoro-net `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/src/:/app/src/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/wwwroot/:/app/wwwroot/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
-      pomodoro-ping-rapi
-
-    docker logs pomo-ping-rapi 
-
-    docker container stop pomo-ping-rapi
-
-    # Cannot attach a debugger, but can have the app auto reload during development.
-    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-    docker run `
-      --name watch-pomo-rapi `
-      --rm -d `
-      -p 2003:80 `
-      --network pomodoro-net `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/config/:/app/config/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
-      pomodoro-watch-rapi
-
-    docker container stop watch-pomo-rapi
-
-    docker logs watch-pomo-rapi 
-    
-    # Does not currently work
-    docker run `
-      --name pomo-rapi `
-      --network pomodoro-net `
-      --rm `
-      -it `
-      -p 5000:80 `
-      -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/out/:/app/ `
-      pomodoro-rapi
-
-    # Explore the rest api container
-    docker exec -it watch-pomo-rapi bash
-
-    # Explore the watch rest api container
-    docker exec -it pomo-rapi bash
-
-    clear
-    # Cannot attach a debugger, but can have the app auto reload during development.
-    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-    docker run `
-      --name pomodoro-idserver `
-      --rm `
-      -d `
-      -p 2002:80 `
-      --network pomodoro-net `
-      -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/src/:/app/src/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/config/:/app/config/ `
-      -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
-      pomodoro-idserver
-
-    docker container stop pomodoro-idserver
-
-    docker logs pomodoro-idserver
-
-    docker exec -it pomodoro-idserver bash
-
-### Exploring pomodoro-net
+### Use powershell to explore pomodoro-net
 
     docker pull mcr.microsoft.com/powershell:6.1.0-rc.1-alpine-3.8
 

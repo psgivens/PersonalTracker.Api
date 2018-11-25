@@ -1,8 +1,43 @@
 #!/usr/bin/pwsh
 
 Function Start-PomEnv {
+<#
+.SYNOPSIS
+    Start necessary microservices via docker. 
+.DESCRIPTION
+    Starts necessary microservices, configures reverse-proxy, and configures mountebank. 
+.PARAMETER Client
+    This tells the reverse proxy how to treat the root directory (/). The default behavior
+    is to provide the html files which are built into the docker image. The other option is
+    localmachine, which points to port 3000 on the host machine. This is usefull if you are 
+    debugging a single page application. 
+.PARAMETER Proxy
+    Start all microservices and mountebank. Point the all connections to mountebank, which
+    will proxy to the microservices. Mountebank is configured to record the traffic for
+    later playback. 
+.PARAMETER Replay
+    Starts only the reverse-proxy and mountebank. Takes a parameter which specifies which 
+    configuration file to use. Currenlty only supports 'webapp'
+.EXAMPLE
+    Start-PomEnv -Client default 
+    Starts all microservices. Localhost will point to the html files in the reverse
+    proxy container.
+.EXAMPLE
+    Start-PomEnv -Proxy
+    Starts all microservices, and the mountebank container. Localhost will point to 
+    the html files in the reverse proxy container (Client:default). Mountebank is 
+    configured to record everything. 
+.EXAMPLE
+    Start-PomEnv -Replay webapp
+    Only starts the reverse proxy container and mountebank. Mountebank is configured 
+    to use the configuration file contained in Mocks/webapp/mountebankconf/imposters.json
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>
     param(
-        [Parameter(Mandatory=$false)]
+        # Which client would you use
+        [Parameter(Mandatory=$false, HelpMessage="To what does the root web directory point?")]
         [ValidateSet("default", "localmachine")] 
         [string]$Client,
 
@@ -246,6 +281,18 @@ Function Start-PomEnv {
 }
 
 Function Stop-PomEnv {
+<#
+.SYNOPSIS
+    Shuts down the docker containers for the environment. 
+.DESCRIPTION
+    Shuts down all docker containers used for the Pomodoro project.
+.EXAMPLE
+    Stop-PomEnv 
+    Checks if each of the known containers is running, and shutds it down. 
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>
     @("pomo-pgsql",
     "pomodoro-reverse-proxy",
     "pomodoro-idserver",
@@ -262,6 +309,22 @@ Function Stop-PomEnv {
 }
 
 Function Start-PgAdmin {
+<#
+.SYNOPSIS
+    Starts a container running pgadmin on the pomodoro-net network. 
+.DESCRIPTION
+    Starts a container running pgadmin on the pomodoro-net network. 
+    Uses the following environment variables
+    * PGADMIN_DEFAULT_EMAIL=user@domain.com
+    * PGADMIN_DEFAULT_PASSWORD=Password1
+.EXAMPLE
+    Start-PgAdmin
+    Starts a container running pgadmin on the pomodoro-net network. 
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>
+
     Write-Host "Starting pomo-pgadmin..."
     # Use pgadmin to explore the database
     docker run `
@@ -276,10 +339,36 @@ Function Start-PgAdmin {
 }
 
 Function Stop-PgAdmin {
+<#
+.SYNOPSIS
+    Stops a container running pgadmin on the pomodoro-net network. 
+.DESCRIPTION
+    Stops a container running pgadmin on the pomodoro-net network. 
+.EXAMPLE
+    Stop-PgAdmin
+    Stops a container running pgadmin on the pomodoro-net network. 
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>
     docker container stop pomo-pgadmin
 }
 
 Function Connect-PomDocker {
+<#
+.SYNOPSIS
+    Executes /bin/sh in of the available containers for the pomodoro project
+.DESCRIPTION
+    Executes /bin/sh in of the available containers for the pomodoro project
+.PARAMETER Container
+    One of the valid containers for the pomodoro project    
+.EXAMPLE
+    Connect-PomDocker pomo-pgsql
+    Executes /bin/sh in the pomo-pgsql container
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>    
     param(
         [Parameter(Mandatory=$false)]
         [ValidateSet(
@@ -295,7 +384,23 @@ Function Connect-PomDocker {
     docker exec -it $Container /bin/sh
 }
 
+
 Function Start-DockerBash {
+<#
+.SYNOPSIS
+    Starts and executes /bin/sh in of the available containers for the pomodoro project.
+.DESCRIPTION
+    Starts and executes /bin/sh in of the available containers for the pomodoro project.
+    This overrides the images entrypoint with /bin/sh
+.PARAMETER Container
+    One of the valid containers for the pomodoro project    
+.EXAMPLE
+    Start-DockerBash pomo-pgsql
+    Starts and executes /bin/sh in the pomo-pgsql container
+.NOTES
+    Author: Phillip Scott Givens
+    Date:   November 25th, 2018
+#>        
     param(
         [Parameter(Mandatory=$false)]
         [ValidateSet(
@@ -317,3 +422,4 @@ Export-ModuleMember -Function Stop-PomEnv
 Export-ModuleMember -Function Connect-PomDocker
 Export-ModuleMember -Function Start-PgAdmin
 Export-ModuleMember -Function Stop-PgAdmin
+Export-ModuleMember -Function Start-DockerBash
