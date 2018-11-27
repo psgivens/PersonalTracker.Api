@@ -434,6 +434,26 @@ Function Initialize-PomEnv {
     docker network create --driver bridge pomodoro-net
 }
 
+Function Build-PomContainers {
+    pushd $env:POMODORO_REPOS
+    docker build -t pomodoro-mountebank -f Mountebank/Dockerfile Mountebank
+
+    docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
+
+    docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
+
+    docker build -t pomodoro-ping-rapi -f Ping.Api/watch.Dockerfile Ping.Api
+
+    docker build -t pomodoro-watch-rapi -f Pomodoro.Api/watch.Dockerfile Pomodoro.Api
+
+    docker build -t pomodoro-idserver -f IdServer/watch.Dockerfile IdServer
+
+    docker build -t pomodoro-pgsql -f pgsql/Dockerfile ./pgsql
+
+    docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
+    popd
+}
+
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Stop-PomEnv
 Export-ModuleMember -Function Connect-PomDocker
@@ -442,4 +462,5 @@ Export-ModuleMember -Function Stop-PgAdmin
 Export-ModuleMember -Function Start-DockerBash
 Export-ModuleMember -Function Update-PomModule
 Export-ModuleMember -Function Initialize-PomEnv
+Export-ModuleMember -Function Build-PomContainers
 

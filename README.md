@@ -48,7 +48,7 @@ LocalProxy/conf/proxy.conf defines the forwarding rules in the proxy
 ## Environment
 Set a local environment variable POMODORO_REPOS to the folder containing your Pomodoro Repos 
 
-    $env:POMODORO_REPOS= "{0}/Repos" -f (ls -d ~)
+    $env:POMODORO_REPOS= "{0}/Repos/psgivens" -f (ls -d ~)
 
 Link the powershell modules to the psmodule path
 
