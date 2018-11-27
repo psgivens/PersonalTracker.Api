@@ -418,6 +418,21 @@ Function Start-DockerBash {
     docker run -it --entrypoint /bin/sh $Container
 }
 
+Function Update-PomModule {
+    $MyPSModulePath = "{0}/.local/share/powershell/Modules" -f (ls -d ~)
+    mkdir -p $MyPSModulePath/PomodoroEnv
+    Write-Host ("Copying {0}/PersonalTracker.Api/scripts/PomodoroEnv.psm1 to {1}/PomodoroEnv/" -f $env:POMODORO_REPOS,  $MyPSModulePath)
+    cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
+    Write-Host "Force import-module PomodorEnv"
+    Import-Module -Force PomodoroEnv
+}
+
+Function Initialize-PomEnv {
+    Write-Host "Creating volume 'pomo-pgsql-volume'"
+    docker volume create pomo-pgsql-volume
+    Write-Host "Creating network 'pomodoro-net'"
+    docker network create --driver bridge pomodoro-net
+}
 
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Stop-PomEnv
@@ -425,3 +440,6 @@ Export-ModuleMember -Function Connect-PomDocker
 Export-ModuleMember -Function Start-PgAdmin
 Export-ModuleMember -Function Stop-PgAdmin
 Export-ModuleMember -Function Start-DockerBash
+Export-ModuleMember -Function Update-PomModule
+Export-ModuleMember -Function Initialize-PomEnv
+
