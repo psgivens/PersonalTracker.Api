@@ -53,7 +53,7 @@ Function Start-PomEnv {
 
     $confdir = if ($Proxy -or $Replay) { "Mocks/proxyconf" } else { "LocalProxy/conf" }
     $proxyconfdir = if ($Client) { $Client.ToLower() } else { "default" }
-    $confmount = "~/Repos/psgivens/PersonalTracker.Api/{0}/{1}/:/conf/" -f $confdir, $proxyconfdir
+    $confmount = "$env:POMODORO_REPOS/PersonalTracker.Api/{0}/{1}/:/conf/" -f $confdir, $proxyconfdir
        
     if ($Proxy) {
 
@@ -95,7 +95,7 @@ Function Start-PomEnv {
             -d `
             --rm `
             -p 80:80 `
-            -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/LocalProxy/app/:/app/ `
             -v $confmount `
             myrevprox 
 
@@ -107,10 +107,10 @@ Function Start-PomEnv {
             --rm -d `
             -p 2003:80 `
             --network pomodoro-net `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
             pomodoro-watch-rapi
 
         # Cannot attach a debugger, but can have the app auto reload during development.
@@ -120,10 +120,10 @@ Function Start-PomEnv {
             --rm -d `
             -p 2004:80 `
             --network pomodoro-net `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/src/:/app/src/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/wwwroot/:/app/wwwroot/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/src/:/app/src/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/wwwroot/:/app/wwwroot/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
             pomodoro-ping-rapi
         
         Write-Host "Starting pomodoro-idserver..."
@@ -135,9 +135,9 @@ Function Start-PomEnv {
             -d `
             -p 2002:80 `
             --network pomodoro-net `
-            -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/src/:/app/src/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/config/:/app/config/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/src/:/app/src/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/config/:/app/config/ `
             pomodoro-idserver
         
         Write-Host "Starting pomodoro-mountebank..."
@@ -154,8 +154,8 @@ Function Start-PomEnv {
             -p 3002:3002 `
             -p 3003:3003 `
             -p 3004:3004 `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/conf/:/mocks/conf/ `
-            -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/gen_conf/:/mocks/gen_conf/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/conf/:/mocks/conf/ `
+            -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/gen_conf/:/mocks/gen_conf/ `
             pomodoro-mountebank 
 
     } elseif ($Replay) {
@@ -180,8 +180,8 @@ Function Start-PomEnv {
         -p 3002:3002 `
         -p 3003:3003 `
         -p 3004:3004 `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Mocks/$Replay/mountebankconf/:/mocks/conf/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Mountebank/gen_conf/:/mocks/gen_conf/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Mocks/$Replay/mountebankconf/:/mocks/conf/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/gen_conf/:/mocks/gen_conf/ `
         pomodoro-mountebank `
         '--configfile' '/mocks/conf/imposters.json'
 
@@ -203,7 +203,7 @@ Function Start-PomEnv {
         -d `
         --rm `
         -p 80:80 `
-        -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/LocalProxy/app/:/app/ `
         -v $confmount `
         myrevprox 
 
@@ -247,7 +247,7 @@ Function Start-PomEnv {
         -d `
         --rm `
         -p 80:80 `
-        -v ~/Repos/psgivens/PersonalTracker.Api/LocalProxy/app/:/app/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/LocalProxy/app/:/app/ `
         -v $confmount `
         myrevprox 
 
@@ -259,10 +259,10 @@ Function Start-PomEnv {
         --rm -d `
         -p 2003:80 `
         --network pomodoro-net `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/config/:/app/config/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/config/:/app/config/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
         pomodoro-watch-rapi
 
         Write-Host "Starting pomodoro-idserver..."
@@ -274,9 +274,9 @@ Function Start-PomEnv {
         -d `
         -p 2002:80 `
         --network pomodoro-net `
-        -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/src/:/app/src/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/config/:/app/config/ `
-        -v ~/Repos/psgivens/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/src/:/app/src/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/config/:/app/config/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
         pomodoro-idserver
 
     } 

@@ -58,6 +58,8 @@ Link the powershell modules to the psmodule path
 
 Once the PomodoroEnv.psm1 is installed you can use the cmdlets to start and stop the environment. 
 
+    Get-Command -Module PomodoroEnv
+
     Get-Help Start-PomEnv -Full
     Get-Help Stop-PomEnv -Full
     Get-Help Connect-PomDocker -Full
