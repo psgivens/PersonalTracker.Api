@@ -34,7 +34,7 @@ namespace Pomodoro.Api
                 .SetBasePath(System.IO.Directory.GetCurrentDirectory())
                 .AddEnvironmentVariables()
                 .AddJsonFile("config/idServerSettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"config/idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .Build();
 
             var idServerSettings = config.GetSection("idServerSettings");

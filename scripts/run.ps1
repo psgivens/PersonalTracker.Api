@@ -3,6 +3,15 @@
 $domain='http://localhost'
 
 #######################
+# Simple pomodoro controller
+#######################
+
+Invoke-WebRequest `
+  -Method Get `
+  -SkipCertificateCheck `
+  -Uri "$domain/api/pomodoro"
+
+#######################
 # Simple ping controller
 #######################
 
