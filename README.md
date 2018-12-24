@@ -60,12 +60,19 @@ Once the PomodoroEnv.psm1 is installed you can use the cmdlets to start and stop
 
     Get-Command -Module PomodoroEnv
 
-    Get-Help Start-PomEnv -Full
-    Get-Help Stop-PomEnv -Full
-    Get-Help Connect-PomDocker -Full
-    Get-Help Start-PgAdmin -Full
-    Get-Help Stop-PgAdmin -Full
-    Get-Help Start-DockerBash -Full
+    Get-Help Build-PomDocker     
+    Get-Help Connect-PomDocker   
+    Get-Help Initialize-PomEnv   
+    Get-Help Start-PgAdmin       
+    Get-Help Start-PomDocker     
+    Get-Help Start-PomDockerShell
+    Get-Help Start-PomEnv        
+    Get-Help Start-PomMountebank 
+    Get-Help Start-PomReverse    
+    Get-Help Stop-PgAdmin        
+    Get-Help Stop-PomEnv         
+    Get-Help Update-PomModule    
+
 
 ### Generate Proxies
 
@@ -210,6 +217,10 @@ Extra commands for reverse-proxy
 
 ### Build the application containers
 
+    # to see available images for building
+    Build-PomImage -Image <tab>
+
+    # Or build them yourself
     docker build -t pomodoro-mountebank -f Mountebank/Dockerfile Mountebank
 
     docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
