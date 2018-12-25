@@ -37,7 +37,7 @@ namespace Pomodoro.Api.Controllers
         [HttpGet("{id}", Name = "GetPerson")]
         public async Task<ActionResult> GetByIdAsync(long id)
         {
-            var item = await Task.FromResult("foo");// _context.People.FindAsync(id);
+            var item = await _context.People.FindAsync(id);
             if (item == null)
             {
                 return NotFound();

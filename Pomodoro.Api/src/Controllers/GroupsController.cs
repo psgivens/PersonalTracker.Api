@@ -29,16 +29,13 @@ namespace Pomodoro.Api.Controllers
         [HttpGet]
         public List<GroupEntity> GetAll()
         {
-            // return Enumerable
-            //     .Empty<PomodoroEntryModel>()
-            //     .ToList();// _context.PomodoroEntries.ToList();
             return _context.Groups.ToList();
         }
 
         [HttpGet("{id}", Name = "GetGroup")]
         public  async Task<ActionResult>  GetByIdAsync(long id)
         {
-            var item = await Task.FromResult("foo");//_context.Groups.FindAsync(id);
+            var item = await _context.Groups.FindAsync(id);
             if (item == null)
             {
                 return NotFound();
