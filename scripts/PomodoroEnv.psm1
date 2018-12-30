@@ -1,5 +1,22 @@
 #!/usr/bin/pwsh
 
+Function Invoke-Ignore {
+@(
+    "pomodoro-reverse-proxy", 
+    "pomodoro-pgsql", 
+    "pomodoro-dotnet-stage", 
+    "pomodoro-rapi"
+) | %{ Publish-PomDocker -Docker microk8s.docker -Image $_ }
+
+@(
+    "pomodoro-reverse-proxy", 
+    "pomodoro-pgsql", 
+    "pomodoro-dotnet-stage", 
+    "pomodoro-rapi"
+) | %{ Build-PomDocker -Docker microk8s.docker -Image $_ }
+
+}
+
 Function Test-PomMissing {
     if (-not $env:POMODORO_REPOS) {
         Write-Host "Please set the $env:POMODORO_REPOS to the location of this repo."
@@ -51,16 +68,11 @@ Function Start-PomReverse {
     -p 80:80 `
     -v $env:POMODORO_REPOS/PersonalTracker.Api/LocalProxy/app/:/app/ `
     -v $confmount `
-    myrevprox 
+    pomodoro-reverse-proxy 
 }
 
 Function Start-PomMountebank {
     param(
-        # Which client would you use
-        [Parameter(Mandatory=$false, HelpMessage="To what does the root web directory point?")]
-        [ValidateSet("default", "localmachine")] 
-        [string]$Client,
-
         [Parameter(ParameterSetName="MountebankProxy")]
         [switch]$Proxy,
 
@@ -70,10 +82,6 @@ Function Start-PomMountebank {
     )
 
     if (Test-PomMissing) { RETURN }
-
-    $confdir = if ($Proxy -or $Replay) { "Mocks/proxyconf" } else { "LocalProxy/conf" }
-    $proxyconfdir = if ($Client) { $Client.ToLower() } else { "default" }
-    $confmount = "$env:POMODORO_REPOS/PersonalTracker.Api/{0}/{1}/:/conf/" -f $confdir, $proxyconfdir
 
     if ($Proxy) {
         
@@ -125,7 +133,7 @@ Function Start-PomDocker {
             HelpMessage="Containers not involved in proxy.",
             ParameterSetName="Individual")]
         [ValidateSet(
-            "pomo-pgsql",
+            "pomodoro-pgsql",
             "pomodoro-idserver",
             "watch-pomo-rapi",
             "pomo-ping-rapi"
@@ -136,13 +144,13 @@ Function Start-PomDocker {
     if (Test-PomMissing) { RETURN }
 
     switch ($Container) {
-        "pomo-pgsql" {
-            Write-Host "Starting pomo-pgsql..."
+        "pomodoro-pgsql" {
+            Write-Host "Starting pomodoro-pgsql..."
             # run the database container
             # https://hub.docker.com/_/postgres/
             docker run `
-                --name pomo-pgsql `
-                --mount source=pomo-pgsql-volume,target=/var/lib/postgresql/data/pgdata `
+                --name pomodoro-pgsql `
+                --mount source=pomodoro-pgsql-volume,target=/var/lib/postgresql/data/pgdata `
                 --network pomodoro-net `
                 --rm `
                 -p 5432:5432 `
@@ -267,12 +275,13 @@ Function Start-PomEnv {
         Write-Host (" - client is {0}" -f $proxyconfdir)
         Write-Host "--------------------------------`n"
         
-        Start-PomDocker -Container "pomo-pgsql"
+        Start-PomDocker -Container "pomodoro-pgsql"
         Start-PomDocker -Container "watch-pomo-rapi"
         Start-PomDocker -Container "pomo-ping-rapi"
         Start-PomDocker -Container "pomodoro-idserver"
         Start-PomReverse -Client $Client -Proxy
-        Start-PomMountebank -Client $Client -Proxy
+        Start-PomMountebank -Proxy
+
     } elseif ($Replay) {    
         $Replay = $Replay.ToLower()
         Write-Host "Starting replay"
@@ -281,13 +290,13 @@ Function Start-PomEnv {
         Write-Host "--------------------------------`n"
 
         Start-PomReverse -Client $Client -Replay $Replay
-        Start-PomMountebank -Client $Client -Replay $Replay
+        Start-PomMountebank -Replay $Replay
     } else {    
         Write-Host "Starting services"
         Write-Host (" - client is {0}" -f $proxyconfdir)
         Write-Host "--------------------------------`n"
 
-        Start-PomDocker -Container "pomo-pgsql"
+        Start-PomDocker -Container "pomodoro-pgsql"
         Start-PomDocker -Container "watch-pomo-rapi"
         Start-PomDocker -Container "pomo-ping-rapi"
         Start-PomDocker -Container "pomodoro-idserver"
@@ -308,7 +317,7 @@ Function Stop-PomEnv {
     Author: Phillip Scott Givens
     Date:   November 25th, 2018
 #>
-    @("pomo-pgsql",
+    @("pomodoro-pgsql",
     "pomodoro-reverse-proxy",
     "pomodoro-idserver",
     "pomodoro-mountebank",
@@ -378,8 +387,8 @@ Function Connect-PomDocker {
 .PARAMETER Container
     One of the valid containers for the pomodoro project    
 .EXAMPLE
-    Connect-PomDocker pomo-pgsql
-    Executes /bin/sh in the pomo-pgsql container
+    Connect-PomDocker pomodoro-pgsql
+    Executes /bin/sh in the pomodoro-pgsql container
 .NOTES
     Author: Phillip Scott Givens
     Date:   November 25th, 2018
@@ -391,7 +400,7 @@ Function Connect-PomDocker {
             "pomodoro-idserver", 
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
-            "pomo-pgsql",
+            "pomodoro-pgsql",
             "pomo-pgadmin"
             )] 
         [string]$Container,
@@ -405,78 +414,278 @@ Function Connect-PomDocker {
 }
 
 
-
-
-
-
 Function Build-PomDocker {
     <#
     .SYNOPSIS
-        Executes /bin/sh in of the available containers for the pomodoro project
+        Builds the docker container related to the pomodor project.
     .DESCRIPTION
-        Executes /bin/sh in of the available containers for the pomodoro project
-    .PARAMETER Container
-        One of the valid containers for the pomodoro project    
+        Builds the docker container related to the pomodor project.
+    .PARAMETER Image
+        One of the valid images for the pomodoro project
     .EXAMPLE
-        Connect-PomDocker pomo-pgsql
-        Executes /bin/sh in the pomo-pgsql container
     .NOTES
         Author: Phillip Scott Givens
-        Date:   November 25th, 2018
     #>    
     param(
         [Parameter(Mandatory=$false)]
         [ValidateSet(
-            "watch-pomo-rapi", 
+            "pomodoro-watch-rapi", 
             "pomodoro-idserver", 
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
-            "pomo-pgsql",
-            "pomo-pgadmin"
+            "pomodoro-pgsql",
+            "pomo-pgadmin",
+            "pomodoro-dotnet-stage",
+            "pomodoro-rapi",
+            "pomodoro-ping-rapi"
             )] 
-        [string]$Image
+        [string]$Image,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker        
     )
 
     if (Test-PomMissing) { RETURN }
+    if ($Docker) {
+        Set-Alias dkr $Docker -Option Private
+    }
 
     $buildpath = "$env:POMODORO_REPOS/PersonalTracker.Api"
     switch($Image) {
-        "watch-pomo-rapi" {
-            docker build `
+        "pomodoro-watch-rapi" {
+            dkr build `
                 -t pomodoro-watch-rapi `
                 -f "$buildpath/Pomodoro.Api/watch.Dockerfile" `
                 "$buildpath/Pomodoro.Api"
         }
         "pomodoro-idserver" {
-            docker build `
+            dkr build `
                 -t pomodoro-idserver `
                 -f "$buildpath/IdServer/watch.Dockerfile" `
                 "$buildpath/IdServer"
         }
         "pomodoro-reverse-proxy" {
-            Write-Host "Not implemented"
+            dkr build `
+                -t pomodoro-reverse-proxy `
+                -f "$buildpath/LocalProxy/Dockerfile" `
+                "$buildpath/LocalProxy"
         }
         "pomodoro-mountebank" {
-            docker build `
+            dkr build `
                 -t pomodoro-mountebank `
                 -f "$buildpath/Mountebank/Dockerfile" `
                 "$buildpath/Mountebank"
         }
-        "pomo-pgsql" {
-            Write-Host "Not implemented"
+        "pomodoro-dotnet-stage" {
+            dkr build `
+                -t pomodoro-dotnet-stage `
+                -f "$buildpath/tools/dotnet.stage.Dockerfile" `
+                "$buildpath/tools"
+        }
+        "pomodoro-rapi" {
+            dkr build `
+                -t pomodoro-rapi `
+                -f "$buildpath/Pomodoro.Api/Dockerfile" `
+                "$buildpath/Pomodoro.Api"
+        }
+        "pomodoro-pgsql" {
+            dkr build `
+                -t pomodoro-pgsql `
+                -f "$buildpath/pgsql/Dockerfile" `
+                "$buildpath/./pgsql"
         }
         "pomo-pgadmin" {
             Write-Host "Not implemented"
         }
+        "pomodoro-ping-rapi" {
+            dkr build `
+                -t pomodoro-ping-rapi `
+                -f "$buildpath/Ping.Api/watch.Dockerfile" `
+                "$buildpath/Ping.Api"
+        }
     }
-
-
-# docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
-# docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
-# docker build -t pomodoro-ping-rapi -f Ping.Api/watch.Dockerfile Ping.Api
-
 }
 
+Function Publish-PomDocker {
+    <#
+    .SYNOPSIS
+        Publish the docker image related to the pomodoro project.
+    .DESCRIPTION
+        Publish the docker image related to the pomodoro project.
+    .PARAMETER Image
+        One of the valid images for the pomodoro project
+    .EXAMPLE
+    .NOTES
+        Author: Phillip Scott Givens
+    #>    
+    param(
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "pomodoro-watch-rapi", 
+            "pomodoro-idserver", 
+            "pomodoro-reverse-proxy", 
+            "pomodoro-mountebank", 
+            "pomodoro-pgsql", 
+            "pomodoro-dotnet-stage", 
+            "pomodoro-rapi", 
+            "pomodoro-ping-rapi"
+            )] 
+        [string]$Image,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker = "docker"
+    )
+
+    if (Test-PomMissing) { RETURN }
+    
+    Set-Alias dkr $Docker -Option Private
+    $repo = switch ($Docker) {
+        "microk8s.docker" {
+            "localhost:32000"
+        }
+        "docker" {
+            throw "publishing to docker hub is not supported"
+        }
+        "azure" {
+            throw "publishing to Azure is not currently supported."
+        }
+
+    }
+
+    $remote = "{0}/{1}" -f $repo, $Image
+    dkr tag $Image $remote
+    dkr push $remote
+}
+
+Function Publish-PomEnv {
+    <#
+    .SYNOPSIS
+        Publish all the docker images related to the pomodoro project.
+    .DESCRIPTION
+        Publish all the docker images related to the pomodoro project.
+    .PARAMETER Image
+        One of the valid images for the pomodoro project
+    .EXAMPLE
+    .NOTES
+        Author: Phillip Scott Givens
+    #>    
+    param(        
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker = "docker"
+    )
+
+    if (Test-PomMissing) { RETURN }    
+    
+    
+    @(
+        "pomodoro-watch-rapi", 
+        "pomodoro-idserver", 
+        "pomodoro-reverse-proxy", 
+        "pomodoro-mountebank", 
+        "pomodoro-pgsql", 
+        "pomodoro-dotnet-stage", 
+        "pomodoro-rapi", 
+        "pomodoro-ping-rapi"
+    ) | %{ Publish-PomDocker -Docker $Docker -Image $_ }
+}
+
+
+Function Get-PomDocker {
+    <#
+    .SYNOPSIS
+        Get the docker image related to the pomodoro project.
+    .DESCRIPTION
+        Get the docker image related to the pomodoro project.
+    .PARAMETER Image
+        One of the valid images for the pomodoro project
+    .EXAMPLE
+    .NOTES
+        Author: Phillip Scott Givens
+    #>    
+    param(
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "pomodoro-watch-rapi", 
+            "pomodoro-idserver", 
+            "pomodoro-reverse-proxy", 
+            "pomodoro-mountebank", 
+            "pomodoro-pgsql",
+            "pomo-pgadmin",
+            "pomodoro-dotnet-stage",
+            "pomodoro-rapi",
+            "pomodoro-ping-rapi"
+            )] 
+        [string]$Image,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker = "docker"
+    )
+
+    if (Test-PomMissing) { RETURN }
+    
+    Set-Alias dkr $Docker -Option Private
+    $repo = switch ($Docker.ToLower()) {
+        "microk8s.docker" {
+            "localhost:32000"
+        }
+        "docker" {
+            throw "Retrieving is not supported for docker hub."
+        }
+        "azure" {
+            throw "Retrieving from Azure is not currently supported."
+        }
+    }
+
+    $remote = "{0}/{1}" -f $repo, $Image    
+    dkr pull $remote
+}
+
+
+Function Build-PomImages {
+    param(
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker = "docker"
+    )
+
+    if (Test-PomMissing) { RETURN }
+
+    @(
+        "pomodoro-watch-rapi", 
+        "pomodoro-idserver", 
+        "pomodoro-reverse-proxy", 
+        "pomodoro-mountebank", 
+        "pomodoro-pgsql",
+        "pomo-pgadmin",
+        "pomodoro-dotnet-stage",
+        "pomodoro-rapi",
+        "pomodoro-ping-rapi"
+    ) | %{ Build-PomDocker -Docker $Docker -Image $_ }
+}
 
 
 Function Start-PomDockerShell {
@@ -489,8 +698,8 @@ Function Start-PomDockerShell {
 .PARAMETER Container
     One of the valid containers for the pomodoro project    
 .EXAMPLE
-    Start-DockerBash pomo-pgsql
-    Starts and executes /bin/sh in the pomo-pgsql container
+    Start-DockerBash pomodoro-pgsql
+    Starts and executes /bin/sh in the pomodoro-pgsql container
 .NOTES
     Author: Phillip Scott Givens
     Date:   November 25th, 2018
@@ -502,7 +711,7 @@ Function Start-PomDockerShell {
             "pomodoro-idserver", 
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
-            "pomo-pgsql",
+            "pomodoro-pgsql",
             "pomo-pgadmin"
             )] 
         [string]$Container,
@@ -525,54 +734,46 @@ Function Update-PomModule {
 }
 
 Function Initialize-PomEnv {
-    Write-Host "Creating volume 'pomo-pgsql-volume'"
-    docker volume create pomo-pgsql-volume
+    Write-Host "Creating volume 'pomodoro-pgsql-volume'"
+    docker volume create pomodoro-pgsql-volume
     Write-Host "Creating network 'pomodoro-net'"
     docker network create --driver bridge pomodoro-net
 }
 
-<<<<<<< HEAD
-Export-ModuleMember -Function Build-PomDocker
-=======
-Function Build-PomContainers {
-    pushd $env:POMODORO_REPOS
-    docker build -t pomodoro-mountebank -f Mountebank/Dockerfile Mountebank
-
-    docker build -t pomodoro-dotnet-stage -f tools/dotnet.stage.Dockerfile tools
-
-    docker build -t pomodoro-rapi -f Pomodoro.Api/Dockerfile Pomodoro.Api
-
-    docker build -t pomodoro-ping-rapi -f Ping.Api/watch.Dockerfile Ping.Api
-
-    docker build -t pomodoro-watch-rapi -f Pomodoro.Api/watch.Dockerfile Pomodoro.Api
-
-    docker build -t pomodoro-idserver -f IdServer/watch.Dockerfile IdServer
-
-    docker build -t pomodoro-pgsql -f pgsql/Dockerfile ./pgsql
-
-    docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
-    popd
+Function Get-K8sName {
+    echo "kctl config current-context"
+    kctl config current-context
 }
 
-Export-ModuleMember -Function Start-PomEnv
-Export-ModuleMember -Function Stop-PomEnv
->>>>>>> 4ba1b83ec592bd00c24b9eb01646b108bd8d5337
+Function Set-K8sName {
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet(
+            "default",
+            "playground"
+            )] 
+        [string]$Namespace
+    )
+    kctl config set-context (kctl config current-context) --namespace $Namespace
+}
+
+Export-ModuleMember -Function Build-PomDocker
+Export-ModuleMember -Function Build-PomImages
 Export-ModuleMember -Function Connect-PomDocker
+Export-ModuleMember -Function Get-K8sName
+Export-ModuleMember -Function Get-PomDocker
 Export-ModuleMember -Function Initialize-PomEnv
+Export-ModuleMember -Function Publish-PomDocker
+Export-ModuleMember -Function Publish-PomEnv
+Export-ModuleMember -Function Set-K8sName
+Export-ModuleMember -Function Start-DockerBash
 Export-ModuleMember -Function Start-PgAdmin
 Export-ModuleMember -Function Start-PomDocker
 Export-ModuleMember -Function Start-PomDockerShell
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Start-PomMountebank
 Export-ModuleMember -Function Start-PomReverse
-Export-ModuleMember -Function Stop-PgAdmin
-<<<<<<< HEAD
 Export-ModuleMember -Function Stop-PomEnv
+Export-ModuleMember -Function Stop-PomEnv
+Export-ModuleMember -Function Stop-PgAdmin
 Export-ModuleMember -Function Update-PomModule
-=======
-Export-ModuleMember -Function Start-DockerBash
-Export-ModuleMember -Function Update-PomModule
-Export-ModuleMember -Function Initialize-PomEnv
-Export-ModuleMember -Function Build-PomContainers
-
->>>>>>> 4ba1b83ec592bd00c24b9eb01646b108bd8d5337

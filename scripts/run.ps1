@@ -12,6 +12,15 @@ Invoke-WebRequest `
   -Uri "$domain/api/pomodoro"
 
 #######################
+# People controller
+#######################
+
+Invoke-WebRequest `
+  -Method Get `
+  -SkipCertificateCheck `
+  -Uri "$domain/api/people"
+
+#######################
 # Simple ping controller
 #######################
 

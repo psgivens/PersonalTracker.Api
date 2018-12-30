@@ -130,10 +130,10 @@ Commans for setting up the environment can be found in PomodoroEnv.psm1
 Working with volumes
 
     # Create the volume for the database
-    docker volume create pomo-pgsql-volume
+    docker volume create pomodoro-pgsql-volume
 
     # Remove the volume for the database
-    docker volume rm pomo-pgsql-volume
+    docker volume rm pomodoro-pgsql-volume
 
 Working with network
 
@@ -146,10 +146,10 @@ Working with pgsql container
     docker build -t pomodoro-pgsql -f pgsql/Dockerfile ./pgsql
 
     # run bash in the database container
-    docker exec -it pomo-pgsql bash
+    docker exec -it pomodoro-pgsql bash
 
     # alternative
-    Connect-PomDocker -Container pomo-pgsql
+    Connect-PomDocker -Container pomodoro-pgsql
 
     # While logged into database container
     psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
