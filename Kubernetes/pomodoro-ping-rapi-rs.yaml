@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: pomodoro-ping-rapi
+  namespace: pomodoro-services
+spec:
+  replicas: 3
+  selector:
+    matchLabels:                 
+      app: pomodoro-ping-rapi
+      env: development
+  template:
+    metadata:                 
+      labels:
+        app: pomodoro-ping-rapi
+        env: development
+    spec:                     
+      containers:             
+      - name: pomodoro-ping-rapi
+        image: localhost:32000/pomodoro-ping-rapi

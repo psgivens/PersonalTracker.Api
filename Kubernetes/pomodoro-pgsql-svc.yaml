@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pomodoro-pgsql
+  namespace: pomodoro-services
+spec:
+  clusterIP: None
+  selector:
+    app: pomodoro-pgsql
+    env: development
+  ports:
+  - name: pgsql
+    port: 5432

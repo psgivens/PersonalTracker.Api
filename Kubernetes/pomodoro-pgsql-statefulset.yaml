@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pomodoro-pgsql
+  namespace: pomodoro-services  
+spec:
+  selector:
+    matchLabels:
+      app: pomodoro-pgsql
+      env: development
+  serviceName: pomodoro-pgsql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pomodoro-pgsql
+        env: development
+    spec:
+      containers:
+      - name: pomodoro-pgsql
+        image: localhost:32000/pomodoro-pgsql
+        env:
+        - name: POSTGRES_PASSWORD
+          value: Password1
+        - name: POSTGRES_USER
+          value: samplesam
+        - name: POSTGRES_DB
+          value: defaultdb
+        ports:
+        - name: pgsql
+          containerPort: 5432
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      resources:
+        requests:
+          storage: 1Gi
+      accessModes:
+      - ReadWriteOnce

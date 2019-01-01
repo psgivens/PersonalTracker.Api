@@ -1,22 +1,5 @@
 #!/usr/bin/pwsh
 
-Function Invoke-Ignore {
-@(
-    "pomodoro-reverse-proxy", 
-    "pomodoro-pgsql", 
-    "pomodoro-dotnet-stage", 
-    "pomodoro-rapi"
-) | %{ Publish-PomDocker -Docker microk8s.docker -Image $_ }
-
-@(
-    "pomodoro-reverse-proxy", 
-    "pomodoro-pgsql", 
-    "pomodoro-dotnet-stage", 
-    "pomodoro-rapi"
-) | %{ Build-PomDocker -Docker microk8s.docker -Image $_ }
-
-}
-
 Function Test-PomMissing {
     if (-not $env:POMODORO_REPOS) {
         Write-Host "Please set the $env:POMODORO_REPOS to the location of this repo."
@@ -349,12 +332,12 @@ Function Start-PgAdmin {
     Date:   November 25th, 2018
 #>
 
-    Write-Host "Starting pomo-pgadmin..."
+    Write-Host "Starting pomodoro-pgadmin..."
     # Use pgadmin to explore the database
     docker run `
         -p 5002:80 `
         --rm `
-        --name pomo-pgadmin `
+        --name pomodoro-pgadmin `
         --network pomodoro-net `
         -e "PGADMIN_DEFAULT_EMAIL=user@domain.com" `
         -e "PGADMIN_DEFAULT_PASSWORD=Password1" `
@@ -375,7 +358,7 @@ Function Stop-PgAdmin {
     Author: Phillip Scott Givens
     Date:   November 25th, 2018
 #>
-    docker container stop pomo-pgadmin
+    docker container stop pomodoro-pgadmin
 }
 
 Function Connect-PomDocker {
@@ -401,7 +384,7 @@ Function Connect-PomDocker {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
-            "pomo-pgadmin"
+            "pomodoro-pgadmin"
             )] 
         [string]$Container,
 
@@ -414,7 +397,7 @@ Function Connect-PomDocker {
 }
 
 
-Function Build-PomDocker {
+Function Build-PomImage {
     <#
     .SYNOPSIS
         Builds the docker container related to the pomodor project.
@@ -434,8 +417,9 @@ Function Build-PomDocker {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
-            "pomo-pgadmin",
+            "pomodoro-pgadmin",
             "pomodoro-dotnet-stage",
+            "pomodoro-utils",
             "pomodoro-rapi",
             "pomodoro-ping-rapi"
             )] 
@@ -447,7 +431,7 @@ Function Build-PomDocker {
             "microk8s.docker",
             "azure"
             )] 
-        [string]$Docker        
+        [string]$Docker="docker"
     )
 
     if (Test-PomMissing) { RETURN }
@@ -487,6 +471,12 @@ Function Build-PomDocker {
                 -f "$buildpath/tools/dotnet.stage.Dockerfile" `
                 "$buildpath/tools"
         }
+        "pomodoro-utils" {
+            dkr build `
+                -t pomodoro-utils `
+                -f "$buildpath/tools/utils.Dockerfile" `
+                "$buildpath/tools"
+        }
         "pomodoro-rapi" {
             dkr build `
                 -t pomodoro-rapi `
@@ -499,8 +489,9 @@ Function Build-PomDocker {
                 -f "$buildpath/pgsql/Dockerfile" `
                 "$buildpath/./pgsql"
         }
-        "pomo-pgadmin" {
-            Write-Host "Not implemented"
+        "pomodoro-pgadmin" {
+            dkr pull `
+                dpage/pgadmin4
         }
         "pomodoro-ping-rapi" {
             dkr build `
@@ -511,7 +502,7 @@ Function Build-PomDocker {
     }
 }
 
-Function Publish-PomDocker {
+Function Publish-PomImage {
     <#
     .SYNOPSIS
         Publish the docker image related to the pomodoro project.
@@ -531,7 +522,9 @@ Function Publish-PomDocker {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql", 
+            "pomodoro-pgadmin", 
             "pomodoro-dotnet-stage", 
+            "pomodoro-utils",
             "pomodoro-rapi", 
             "pomodoro-ping-rapi"
             )] 
@@ -563,7 +556,13 @@ Function Publish-PomDocker {
     }
 
     $remote = "{0}/{1}" -f $repo, $Image
-    dkr tag $Image $remote
+
+    $imgname = switch ($Image) {
+        "pomodoro-pgadmin" { "dpage/pgadmin4" }
+        default { $Image }
+    }
+
+    dkr tag $imgname $remote
     dkr push $remote
 }
 
@@ -599,13 +598,14 @@ Function Publish-PomEnv {
         "pomodoro-mountebank", 
         "pomodoro-pgsql", 
         "pomodoro-dotnet-stage", 
+        "pomodoro-utils",
         "pomodoro-rapi", 
         "pomodoro-ping-rapi"
-    ) | %{ Publish-PomDocker -Docker $Docker -Image $_ }
+    ) | %{ Publish-PomImage -Docker $Docker -Image $_ }
 }
 
 
-Function Get-PomDocker {
+Function Get-PomImage {
     <#
     .SYNOPSIS
         Get the docker image related to the pomodoro project.
@@ -625,8 +625,9 @@ Function Get-PomDocker {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
-            "pomo-pgadmin",
+            "pomodoro-pgadmin",
             "pomodoro-dotnet-stage",
+            "pomodoro-utils",
             "pomodoro-rapi",
             "pomodoro-ping-rapi"
             )] 
@@ -680,11 +681,12 @@ Function Build-PomImages {
         "pomodoro-reverse-proxy", 
         "pomodoro-mountebank", 
         "pomodoro-pgsql",
-        "pomo-pgadmin",
+        "pomodoro-pgadmin",
         "pomodoro-dotnet-stage",
+        "pomodoro-utils",
         "pomodoro-rapi",
         "pomodoro-ping-rapi"
-    ) | %{ Build-PomDocker -Docker $Docker -Image $_ }
+    ) | %{ Build-PomImage -Docker $Docker -Image $_ }
 }
 
 
@@ -712,7 +714,7 @@ Function Start-PomDockerShell {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
-            "pomo-pgadmin"
+            "pomodoro-pgadmin"
             )] 
         [string]$Container,
 
@@ -730,7 +732,7 @@ Function Update-PomModule {
     Write-Host ("Copying {0}/PersonalTracker.Api/scripts/PomodoroEnv.psm1 to {1}/PomodoroEnv/" -f $env:POMODORO_REPOS,  $MyPSModulePath)
     cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
     Write-Host "Force import-module PomodorEnv"
-    Import-Module -Force PomodoroEnv
+    Import-Module -Force PomodoroEnv -Global
 }
 
 Function Initialize-PomEnv {
@@ -757,13 +759,26 @@ Function Set-K8sName {
     kctl config set-context (kctl config current-context) --namespace $Namespace
 }
 
-Export-ModuleMember -Function Build-PomDocker
+Function Invoke-PomK8Docker {
+    microk8s.docker @args
+}
+Set-Alias kdock Invoke-PomK8Docker
+
+Function Invoke-PomKubectl {
+    microk8s.kubectl --namespace pomodoro-services @args
+}
+Set-Alias k8p Invoke-PomKubectl
+
+Export-ModuleMember -Function Initialize-PomAlias
+Export-ModuleMember -Function Build-PomImage
 Export-ModuleMember -Function Build-PomImages
 Export-ModuleMember -Function Connect-PomDocker
 Export-ModuleMember -Function Get-K8sName
-Export-ModuleMember -Function Get-PomDocker
+Export-ModuleMember -Function Get-PomImage
 Export-ModuleMember -Function Initialize-PomEnv
-Export-ModuleMember -Function Publish-PomDocker
+Export-ModuleMember -Function Invoke-PomK8Docker -Alias kdock
+Export-ModuleMember -Function Invoke-PomKubectl -Alias k8p
+Export-ModuleMember -Function Publish-PomImage
 Export-ModuleMember -Function Publish-PomEnv
 Export-ModuleMember -Function Set-K8sName
 Export-ModuleMember -Function Start-DockerBash
