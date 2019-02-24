@@ -1,21 +1,60 @@
-# PersonalTracker.Api
+#### PersonalTracker.Api
 
-## Introduction
+# Introduction
 
 PersonalTracker.Api is a reference implementation of using microservices with a browser based application. It currently has two services, each backed by a database.
 
-* The Pomodoro.Api service manages a logs of time blocks of the user.
-* The IdServer manages authentication and authorization.
+* **Pomodoro.Api** - service manages a logs of time blocks of the user.
+* **IdServer** - manages authentication and authorization.
+* **Ping.Api** - designed to be a no-frills microservice to show that something works.
 
 In addition to these there are containers which only exist in development.
 
-* LocalProxy, serves static pages, and makes all requests to look like they are served from the same machine. In production, this will be replaced by a Storage Bucket with CDN for static pages, and a Kubernetes Service for the routing.
-* pgsql, hosts a local postgresql database. In production, this would be replaced by a hosted database
-* pgadmin4, is a web-based sql explorer for postgresql. It is pulled directly from dockerhub.
+* **LocalProxy**, serves static pages, and makes all requests to look like they are served from the same machine. In production, this will be replaced by a Storage Bucket with CDN for static pages, and a Kubernetes Service for the routing.
+* **pgsql**, hosts a local postgresql database. In production, this would be replaced by a hosted database
+* **pgadmin4**, is a web-based sql explorer for postgresql. It is pulled directly from dockerhub.
 
-All containers are connected via one bridged docker network, pomodoro-net
+All containers are connected via one bridged docker network, **pomodoro-net**
 
 During run, source code directories are mapped via docker volumes
+
+# Setup
+
+## Environment
+Set a local environment variable POMODORO_REPOS to the folder containing your Pomodoro Repos 
+
+    $env:POMODORO_REPOS= "{0}/Repos/psgivens" -f (ls -d ~)
+
+Link the powershell modules to the psmodule path
+
+    $MyPSModulePath = "{0}/.local/share/powershell/Modules" -f (ls -d ~)
+    mkdir -p $MyPSModulePath/PomodoroEnv
+    cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
+
+After this has been run, you can always update with the following:
+
+    Update-PomModule -Global
+
+Initialize the volume and network like this: 
+
+    Initialize-PomEnv
+
+# Run 
+
+Start the pomodoro services like this: 
+
+    Start-PomEnv -Client default -NoProxy
+
+Take inventory
+
+    clear
+    docker network list | grep -E "NAME|pomodoro"
+    docker volume list | grep -E "NAME|pomodoro"
+    docker container list -a | grep -E "NAMES|rapi|pgadmin|pomo|dbg"
+
+    docker image list
+
+## Sanity checks
 
 Here are some URLS to use as sanity checks
 
@@ -39,22 +78,14 @@ Ports used in this project
 * 2525 - mountebank
 * 300x - mountebank imposters matching other 200x. 
 
-### Local Proxy Server
+## Local Proxy Server
 
 LocalProxy/conf/proxy.conf defines the forwarding rules in the proxy
 
-# Setup
 
-## Environment
-Set a local environment variable POMODORO_REPOS to the folder containing your Pomodoro Repos 
+# Common tasks
 
-    $env:POMODORO_REPOS= "{0}/Repos/psgivens" -f (ls -d ~)
-
-Link the powershell modules to the psmodule path
-
-    $MyPSModulePath = "{0}/.local/share/powershell/Modules" -f (ls -d ~)
-    mkdir -p $MyPSModulePath/PomodoroEnv
-    cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
+## Getting Help
 
 Once the PomodoroEnv.psm1 is installed you can use the cmdlets to start and stop the environment. 
 
@@ -73,31 +104,57 @@ Once the PomodoroEnv.psm1 is installed you can use the cmdlets to start and stop
     Get-Help Stop-PomEnv         
     Get-Help Update-PomModule    
 
+## Generate Proxies
 
-### Generate Proxies
+Generate the proxy mocks with mountebank
 
     Start-PomEnv -Client default -Proxy
     ./scripts/run.ps1
 
-## dotnet core projects
-### Seting up dotnet core applications
+## Seting up dotnet core applications
 Instructions for creating dotnet apps can be found at:
 [aspnetcore-2.1](https://docs.microsoft.com/en-us/aspnet/core/tutorials/web-api-vsc?view=aspnetcore-2.1)
 
     dotnet new webapi -o Pomodoro.Api
 
+## Working with dotnet core entity framework    
+
+Add code to the startup file
+
+    var connectionString = Configuration["PomodoroDbContextSettings:ConnectionString"];
+    services.AddDbContext<PomodoroDbContext>(
+        opts => opts.UseNpgsql(connectionString)
+    );
+
+Add configuration 
+
+    # Change **Host** to localhost if you aren't executing from within a container.
+    "PomodoroDbContextSettings" :{
+        "ConnectionString" : "User ID=samplesam;Password=Password1;Host=pomodoro-pgsql;Port=5432;Database=PomodoroDb;Pooling=true;"
+    },
+
+Use dotnet cli to work with entity framework
+
     dotnet ef migrations add InitialMigration
 
     dotnet ef database update
 
-### Setup remote debugging
+## Setup remote debugging
 
-Remote debugging requires the source on the server to be in sync with the source in the editor. We are going to use docker volumes to achieve this. This should work for both docker and minikube. We do not want to map our binaries because they will get locked by the server which will prevent us from building on the client. This can cause the IDE to have problems finding dependencies. Move everything which requires editing to a subfolder called src. 
+**Problem**: Container files must be in-sync with local files for editor  
+**Solution**: Use docker volumes. This should work for both docker and minikube. 
 
-In addition, we want to plan for the future for configuration files. We create two folders for this purpose. One to house general configuration, and another for secret configuration. This will allow us to inject these values from our orchastrator (Kubernetes) down the line. 
+**Problem**: Mapping binaries into container volume causes problems because the container process locks the files that the ide tries to modify. This prevents us from building.  
+**Solution**: Move everything which requires editing to a subfolder called src. 
 
-* [Installing vsdbg on the server](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes#installing-vsdbg-on-the-server)
-* [Configuring Docker attach with launch.json](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes#configuring-docker-attach-with-launchjson)
+**Problem**: We need to inject config files and secrets  
+**Solution**: Create two folders, one for general configuration, and another for secret configuration. This will allow us to inject these values from our orchastrator (Kubernetes) down the line. 
+
+**Problem**: We want to debug the program running in the docker container  
+**Solution**: Follow these instructions.
+
+* Read [Installing vsdbg on the server](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes#installing-vsdbg-on-the-server)
+* Read [Configuring Docker attach with launch.json](https://github.com/OmniSharp/omnisharp-vscode/wiki/Attaching-to-remote-processes#configuring-docker-attach-with-launchjson)
 * Move your source code (Controllers, models, etc) to a subfolder called source
 * * Do include folders
 * * Do include Program.cs, Startups.cs, etc
@@ -111,21 +168,7 @@ In addition, we want to plan for the future for configuration files. We create t
 * * config
 * * secrets
 
-# Running
-
-* Setup infrastructure
-* Take inventory
-* Build
-* Run containers
-
-### Setting up the docker infrastrucutre
-
-This infrastructure section contains common commands for these containers
-* Pomodoro Postgresql Database
-* pgadmin4
-* Local reverse proxy
-
-Commans for setting up the environment can be found in PomodoroEnv.psm1
+## Volumes and Network
 
 Working with volumes
 
@@ -139,7 +182,9 @@ Working with network
 
     # Create the network
     docker network create --driver bridge pomodoro-net
-  
+
+## Exploring the database
+
 Working with pgsql container
 
     # Build the pgsql database
@@ -156,21 +201,23 @@ Working with pgsql container
 
     # PGADMIN_DEFAULT_EMAIL=user@domain.com
     # PGADMIN_DEFAULT_PASSWORD=Password1
-    Start-PgAdmin
+    Start-PomPgAdmin
+
+## Reverse proxy (apache)
 
 Some extras for the reverse proxy
 
-    # Create and run the reverse proxy
-    #
-    docker build -t myrevprox -f LocalProxy/Dockerfile ./LocalProxy
-    
     docker exec -it pomodoro-reverse-proxy apache2ctl restart
 
-### Redirect traffic through mountebank for recording
+    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/error.log
+
+    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
+
+## Redirect traffic through mountebank for recording
 
 * 3002 - id server
 * 3003 - pomodoro api 
-* 3004 - ping api 
+* 3004 - ping api   
 
 .
 
@@ -201,19 +248,6 @@ Some extras for the reverse proxy
     # Definition of mock passthrough ping api service
     Invoke-WebRequest -Uri "http://localhost:2525/imposters/3004" | %{ $_.content }
 
-Extra commands for reverse-proxy
-
-    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/error.log
-
-    docker exec -it pomodoro-reverse-proxy cat /var/log/apache2/access.log
-
-### Take inventory
-    clear
-    docker network list | grep -E "NAME|pomodoro"
-    docker volume list | grep -E "NAME|pomodoro"
-    docker container list -a | grep -E "NAMES|rapi|pgadmin|pomo|dbg"
-
-    docker image list
 
 ### Build the application containers
 

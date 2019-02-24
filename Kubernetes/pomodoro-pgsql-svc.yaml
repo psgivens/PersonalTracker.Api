@@ -10,4 +10,4 @@ spec:
     env: development
   ports:
   - name: pgsql
-    port: 5432
+    port: 5432    

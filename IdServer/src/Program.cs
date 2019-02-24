@@ -14,29 +14,39 @@ namespace IdServer
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main (string[] args){            
+            RunWeb(args);
+        }
+
+        public static void RunWeb(string[] args)
         {
             // CreateWebHostBuilder(args).Build().Run();
 
+            var host = BuildWebHost(args);
+
+            host.Run();
+        }            
+        public static IWebHost BuildWebHost(string[] args) {
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddEnvironmentVariables()
                 .AddJsonFile("secrets/certificate.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"certificate.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .AddJsonFile("config/idServerSettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("config/dbContextSettings.json", optional: false, reloadOnChange: false)
                 .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .Build();
 
+            /* Begin ** Not used yet. Do not delete until we know if we will.  */
             var certificateSettings = config.GetSection("certificateSettings");
             string certificateFileName = certificateSettings.GetValue<string>("filename");
             string certificatePassword = certificateSettings.GetValue<string>("password");
 
             var certificate = new X509Certificate2(certificateFileName, certificatePassword);
 
-            var idServerSettings = config.GetSection("idServerSettings");
-            string issuerUri = idServerSettings.GetValue<string>("IssuerUri");
+            /* End ** Not used yet. Do not delete until we know if we will.  */
 
-            var host = WebHost.CreateDefaultBuilder(args)
+            return WebHost.CreateDefaultBuilder(args)
                 .UseKestrel(
                     options =>
                     {
@@ -52,8 +62,7 @@ namespace IdServer
                 .UseStartup<Startup>()
                 .UseUrls("http://localhost")
                 .Build();
+        }
 
-            host.Run();
-        }            
     }
 }

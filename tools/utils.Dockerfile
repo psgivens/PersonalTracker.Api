@@ -7,4 +7,5 @@ RUN apt-get update \
         iputils-ping \
         dnsutils \
         curl \
-        telnet-ssl
+        telnet-ssl \
+        postgresql-client-10

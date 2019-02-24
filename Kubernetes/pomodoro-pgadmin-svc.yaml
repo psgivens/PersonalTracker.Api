@@ -1,0 +1,13 @@
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: pomodoro-pgadmin
+      namespace: pomodoro-services
+    spec:
+      type: NodePort
+      ports:
+      - port: 5002
+        targetPort: 80
+      selector:
+          app: pomodoro-pgadmin
+          env: development

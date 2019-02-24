@@ -1,0 +1,6 @@
+{
+  "idServerSettings": {
+    "IssuerUri": "http://localhost:2002",
+    "Authority": "http://localhost:2002"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "IdServerDbContextSettings" :{
+    "ConnectionString" : "User ID=samplesam;Password=Password1;Host=pomodoro-pgsql;Port=5432;Database=IdserverDb;Pooling=true;"
+  }
+}

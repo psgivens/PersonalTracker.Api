@@ -7,6 +7,11 @@ Function Test-PomMissing {
     }   
 }
 
+Function Use-PomDirectory {
+    if (Test-PomMissing) { RETURN }
+    Set-Location "$env:POMODORO_REPOS/PersonalTracker.Api"
+}
+
 Function Start-PomReverse {
     param(
         # Which client would you use
@@ -109,7 +114,7 @@ Function Start-PomMountebank {
     }
 }
 
-Function Start-PomDocker {
+Function Start-PomContainer {
     param(
         [Parameter(
             Mandatory=$true, 
@@ -119,7 +124,8 @@ Function Start-PomDocker {
             "pomodoro-pgsql",
             "pomodoro-idserver",
             "watch-pomo-rapi",
-            "pomo-ping-rapi"
+            "pomo-ping-rapi",
+            "pomodoro-client"
         )] 
         [string]$Container
     )
@@ -188,6 +194,17 @@ Function Start-PomDocker {
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/config/:/app/config/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Ping.Api/secrets/:/app/secrets/ `
                 pomodoro-ping-rapi
+        }
+        "pomodoro-client" {
+            Write-Host "Starting pomodoro-client..."
+            # Cannot attach a debugger, but can have the app auto reload during development.
+            # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+            docker run `
+                --name pomodoro-client `
+                --rm -it `
+                --network pomodoro-net `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/ClientTools/src/:/app/src/ `
+                pomodoro-client
         }
         default {}
     }
@@ -258,10 +275,10 @@ Function Start-PomEnv {
         Write-Host (" - client is {0}" -f $proxyconfdir)
         Write-Host "--------------------------------`n"
         
-        Start-PomDocker -Container "pomodoro-pgsql"
-        Start-PomDocker -Container "watch-pomo-rapi"
-        Start-PomDocker -Container "pomo-ping-rapi"
-        Start-PomDocker -Container "pomodoro-idserver"
+        Start-PomContainer -Container "pomodoro-pgsql"
+        Start-PomContainer -Container "watch-pomo-rapi"
+        Start-PomContainer -Container "pomo-ping-rapi"
+        Start-PomContainer -Container "pomodoro-idserver"
         Start-PomReverse -Client $Client -Proxy
         Start-PomMountebank -Proxy
 
@@ -279,10 +296,10 @@ Function Start-PomEnv {
         Write-Host (" - client is {0}" -f $proxyconfdir)
         Write-Host "--------------------------------`n"
 
-        Start-PomDocker -Container "pomodoro-pgsql"
-        Start-PomDocker -Container "watch-pomo-rapi"
-        Start-PomDocker -Container "pomo-ping-rapi"
-        Start-PomDocker -Container "pomodoro-idserver"
+        Start-PomContainer -Container "pomodoro-pgsql"
+        Start-PomContainer -Container "watch-pomo-rapi"
+        Start-PomContainer -Container "pomo-ping-rapi"
+        Start-PomContainer -Container "pomodoro-idserver"
         Start-PomReverse -Client $Client -NoProxy
     } 
 }
@@ -315,7 +332,7 @@ Function Stop-PomEnv {
     }
 }
 
-Function Start-PgAdmin {
+Function Start-PomPgAdmin {
 <#
 .SYNOPSIS
     Starts a container running pgadmin on the pomodoro-net network. 
@@ -345,7 +362,7 @@ Function Start-PgAdmin {
         dpage/pgadmin4
 }
 
-Function Stop-PgAdmin {
+Function Stop-PomPgAdmin {
 <#
 .SYNOPSIS
     Stops a container running pgadmin on the pomodoro-net network. 
@@ -361,7 +378,7 @@ Function Stop-PgAdmin {
     docker container stop pomodoro-pgadmin
 }
 
-Function Connect-PomDocker {
+Function Connect-PomContainer {
 <#
 .SYNOPSIS
     Executes /bin/sh in of the available containers for the pomodoro project
@@ -370,7 +387,7 @@ Function Connect-PomDocker {
 .PARAMETER Container
     One of the valid containers for the pomodoro project    
 .EXAMPLE
-    Connect-PomDocker pomodoro-pgsql
+    Connect-PomContainer pomodoro-pgsql
     Executes /bin/sh in the pomodoro-pgsql container
 .NOTES
     Author: Phillip Scott Givens
@@ -384,16 +401,53 @@ Function Connect-PomDocker {
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
-            "pomodoro-pgadmin"
+            "pomodoro-pgadmin",
+            "pomodoro-utils"
             )] 
         [string]$Container,
 
         [Parameter(Mandatory=$false)]
-        [switch]$Bash
-        
+        [switch]$Bash,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "docker", 
+            "microk8s.docker",
+            "azure"
+            )] 
+        [string]$Docker = "docker",
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(
+            "0", 
+            "1",
+            "2"
+            )] 
+        [string]$Number
     )
+
+    if (Test-PomMissing) { RETURN }
+
     $sh = if ($Bash) { "/bin/bash" } else { "/bin/sh" }
-    docker exec -it $Container $sh
+
+    switch ($Docker) {
+        "microk8s.docker" {
+            $c = if ($Number) { "{0}-{1}" -f $Container, $Number }
+                 else { $Container }
+            microk8s.kubectl exec `
+                --namespace pomodoro-services `
+                -it `
+                $c `
+                -- /bin/bash
+        }
+        "docker" {
+            docker exec -it $Container $sh
+        }
+        "azure" {
+            throw "Connecting to Azure is not currently supported."
+        }
+    }
+
 }
 
 
@@ -421,7 +475,8 @@ Function Build-PomImage {
             "pomodoro-dotnet-stage",
             "pomodoro-utils",
             "pomodoro-rapi",
-            "pomodoro-ping-rapi"
+            "pomodoro-ping-rapi",
+            "pomodoro-client"
             )] 
         [string]$Image,
 
@@ -498,6 +553,12 @@ Function Build-PomImage {
                 -t pomodoro-ping-rapi `
                 -f "$buildpath/Ping.Api/watch.Dockerfile" `
                 "$buildpath/Ping.Api"
+        }
+        "pomodoro-client" {
+            dkr build `
+                -t pomodoro-client `
+                -f "$buildpath/ClientTools/watch.Dockerfile" `
+                "$buildpath/ClientTools"
         }
     }
 }
@@ -690,7 +751,7 @@ Function Build-PomImages {
 }
 
 
-Function Start-PomDockerShell {
+Function Start-PomContainerShell {
 <#
 .SYNOPSIS
     Starts and executes /bin/sh in of the available containers for the pomodoro project.
@@ -772,7 +833,7 @@ Set-Alias k8p Invoke-PomKubectl
 Export-ModuleMember -Function Initialize-PomAlias
 Export-ModuleMember -Function Build-PomImage
 Export-ModuleMember -Function Build-PomImages
-Export-ModuleMember -Function Connect-PomDocker
+Export-ModuleMember -Function Connect-PomContainer
 Export-ModuleMember -Function Get-K8sName
 Export-ModuleMember -Function Get-PomImage
 Export-ModuleMember -Function Initialize-PomEnv
@@ -782,13 +843,13 @@ Export-ModuleMember -Function Publish-PomImage
 Export-ModuleMember -Function Publish-PomEnv
 Export-ModuleMember -Function Set-K8sName
 Export-ModuleMember -Function Start-DockerBash
-Export-ModuleMember -Function Start-PgAdmin
-Export-ModuleMember -Function Start-PomDocker
-Export-ModuleMember -Function Start-PomDockerShell
+Export-ModuleMember -Function Start-PomPgAdmin
+Export-ModuleMember -Function Start-PomContainer
+Export-ModuleMember -Function Start-PomContainerShell
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Start-PomMountebank
 Export-ModuleMember -Function Start-PomReverse
 Export-ModuleMember -Function Stop-PomEnv
-Export-ModuleMember -Function Stop-PomEnv
-Export-ModuleMember -Function Stop-PgAdmin
+Export-ModuleMember -Function Stop-PomPgAdmin
 Export-ModuleMember -Function Update-PomModule
+Export-ModuleMember -Function Use-PomDirectory
