@@ -14,7 +14,19 @@ namespace IdServer
 {
     public class Program
     {
+        
+        [System.Diagnostics.Conditional("DEBUG")]
+        private static void WaitForDebugger(){
+            System.Console.WriteLine("Waiting for debugger to attach.");
+            while(!System.Diagnostics.Debugger.IsAttached) {
+                System.Console.Write(".");
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(3));                
+            }
+            System.Console.WriteLine("\nDebugger attached!");
+        }
+
         public static void Main (string[] args){            
+            // WaitForDebugger();
             RunWeb(args);
         }
 
@@ -31,7 +43,7 @@ namespace IdServer
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddEnvironmentVariables()
                 .AddJsonFile("secrets/certificate.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"certificate.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+                // .AddJsonFile($"certificate.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
                 .AddJsonFile("config/idServerSettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile("config/dbContextSettings.json", optional: false, reloadOnChange: false)
                 .AddJsonFile($"idServerSettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
@@ -55,12 +67,17 @@ namespace IdServer
                         {
                             // listenOptions.UseHttps(certificate);
                         });
+                        options.Listen(IPAddress.Any, 443, listenOptions =>
+                        {
+                            listenOptions.UseHttps(certificate);
+                        });
                     }
                 )
                 .UseConfiguration(config)
                 // .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseStartup<Startup>()
-                .UseUrls("http://localhost")
+                //https://stackoverflow.com/questions/46621788/how-to-use-https-ssl-with-kestrel-in-asp-net-core-2-x
+                .UseUrls("http://localhost;https://localhost;http://pomodoro-idserver;https://pomodoro-idserver")
                 .Build();
         }
 

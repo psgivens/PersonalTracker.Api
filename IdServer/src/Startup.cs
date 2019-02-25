@@ -23,23 +23,10 @@ namespace IdServer
 
         public IConfiguration Configuration { get; }
 
-        [System.Diagnostics.Conditional("DEBUG")]
-        private static void WaitForDebugger(){
-            System.Console.WriteLine("Waiting for debugger to attach.");
-            while(!System.Diagnostics.Debugger.IsAttached) {
-                System.Console.Write(".");
-                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(3));                
-            }
-            System.Console.WriteLine("\nDebugger attached!");
-            System.Diagnostics.Debugger.Break();
-        }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
-        {
-            // WaitForDebugger ();
-            
+        {            
             services.AddScoped<IUserRepository, UserRepository>();
             var idServerSettings = Configuration.GetSection("idServerSettings");
             string issuerUri = idServerSettings.GetValue<string>("IssuerUri");
@@ -81,6 +68,7 @@ namespace IdServer
             }
 
             app.UseIdentityServer();
+
             app.UseCors(builder 
                 => builder
                     .AllowAnyOrigin()

@@ -30,7 +30,12 @@ namespace ResourceOwnerClient
             // discover endpoints from metadata
             var client = new HttpClient();
 
-            var disco = await client.GetDiscoveryDocumentAsync("https://pomodoro-idserver");
+            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest{
+                Address = "http://pomodoro-idserver",
+                Policy = { 
+                    // https://identitymodel.readthedocs.io/en/latest/client/discovery.html
+                    RequireHttps = false }});
+
             // var disco = await client.GetDiscoveryDocumentAsync("http://localhost:2002");
             // var disco = await client.GetDiscoveryDocumentAsync("http://localhost:5000");
             if (disco.IsError)
