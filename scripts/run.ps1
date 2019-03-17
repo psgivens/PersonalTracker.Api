@@ -107,13 +107,24 @@ Invoke-WebRequest `
   -SkipCertificateCheck `
   -Uri "$domain/.well-known/openid-configuration"
 
-$body="client_id=client&client_secret=secret&grant_type=client_credentials&scopes=api1"
+## Pre password grant type
+# $body="client_id=client&client_secret=secret&grant_type=client_credentials&scopes=api1"
+# $token = Invoke-RestMethod `
+#   -Method Post `
+#   -ContentType "application/x-www-form-urlencoded" `
+#   -Body $body `
+#   -SkipCertificateCheck `
+#   -Uri "$domain/connect/token"
+
+# Current password grant type
+$body="client_id=client&client_secret=secret&grant_type=password&scopes=api1&username=js@moe&password=password123"
 $token = Invoke-RestMethod `
   -Method Post `
   -ContentType "application/x-www-form-urlencoded" `
   -Body $body `
   -SkipCertificateCheck `
   -Uri "$domain/connect/token"
+
 
 $headers = @{
   "Authorization"="Bearer " + $token.access_token

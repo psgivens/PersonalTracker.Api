@@ -43,7 +43,7 @@ namespace IdServer {
                 context.Result = new GrantValidationResult(TokenRequestErrors.InvalidGrant, "User does not exist.");
                 return;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 context.Result = new GrantValidationResult(TokenRequestErrors.InvalidGrant, "Invalid username or password");
             }

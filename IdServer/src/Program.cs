@@ -26,7 +26,13 @@ namespace IdServer
         }
 
         public static void Main (string[] args){            
-            // WaitForDebugger();
+            var debug = Array.IndexOf(args, "--debug");
+            if (debug > 0) {
+                var argsl = new List<string>(args);
+                argsl.RemoveAt(debug);
+                args= argsl.ToArray();
+                WaitForDebugger();
+            }
             RunWeb(args);
         }
 

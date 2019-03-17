@@ -127,7 +127,10 @@ Function Start-PomContainer {
             "pomo-ping-rapi",
             "pomodoro-client"
         )] 
-        [string]$Container
+        [string]$Container,
+
+        [Parameter()]
+        [switch]$Attach
     )
 
     if (Test-PomMissing) { RETURN }
@@ -135,6 +138,8 @@ Function Start-PomContainer {
     switch ($Container) {
         "pomodoro-pgsql" {
             Write-Host "Starting pomodoro-pgsql..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
+
             # run the database container
             # https://hub.docker.com/_/postgres/
             docker run `
@@ -152,6 +157,8 @@ Function Start-PomContainer {
         }
         "pomodoro-idserver" {
             Write-Host "Starting pomodoro-idserver..."
+            $Flags = if ($Attach) { '--debug' } else { '' }
+            
             # Cannot attach a debugger, but can have the app auto reload during development.
             # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
             docker run `
@@ -163,10 +170,12 @@ Function Start-PomContainer {
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/src/:/app/src/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/config/:/app/config/ `
-                pomodoro-idserver
+                pomodoro-idserver $Flags
         }
         "watch-pomo-rapi" {
             Write-Host "Starting watch-pomo-rapi..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
+
             # Cannot attach a debugger, but can have the app auto reload during development.
             # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
             docker run `
@@ -182,6 +191,8 @@ Function Start-PomContainer {
         }
         "pomo-ping-rapi" {
             Write-Host "Starting pomo-ping-rapi..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
+
             # Cannot attach a debugger, but can have the app auto reload during development.
             # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
             docker run `
@@ -197,6 +208,8 @@ Function Start-PomContainer {
         }
         "pomodoro-client" {
             Write-Host "Starting pomodoro-client..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
+
             # Cannot attach a debugger, but can have the app auto reload during development.
             # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
             docker run `
@@ -505,7 +518,7 @@ Function Build-PomImage {
         "pomodoro-idserver" {
             dkr build `
                 -t pomodoro-idserver `
-                -f "$buildpath/IdServer/watch.Dockerfile" `
+                -f "$buildpath/IdServer/debug.Dockerfile" `
                 "$buildpath/IdServer"
         }
         "pomodoro-reverse-proxy" {

@@ -58,7 +58,7 @@ namespace IdServer
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //log your error
             }
@@ -85,7 +85,7 @@ namespace IdServer
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //handle error logging
             }

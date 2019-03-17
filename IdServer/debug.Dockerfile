@@ -17,5 +17,5 @@ COPY --from=build-env /vsdbg/ /vsdbg/
 
 WORKDIR /app
 COPY --from=build-env /app/ .
-ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:80"]
+ENTRYPOINT ["dotnet", "run", "--urls", "http://0.0.0.0:80"]
 
