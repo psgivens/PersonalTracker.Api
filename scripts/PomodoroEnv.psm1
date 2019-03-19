@@ -123,14 +123,12 @@ Function Start-PomContainer {
         [ValidateSet(
             "pomodoro-pgsql",
             "pomodoro-idserver",
+            "pomodoro-reverse-proxy",
             "watch-pomo-rapi",
             "pomo-ping-rapi",
             "pomodoro-client"
         )] 
-        [string]$Container,
-
-        [Parameter()]
-        [switch]$Attach
+        [string]$Container
     )
 
     if (Test-PomMissing) { RETURN }
@@ -156,21 +154,8 @@ Function Start-PomContainer {
                 pomodoro-pgsql        
         }
         "pomodoro-idserver" {
-            Write-Host "Starting pomodoro-idserver..."
-            $Flags = if ($Attach) { '--debug' } else { '' }
-            
-            # Cannot attach a debugger, but can have the app auto reload during development.
-            # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
-            docker run `
-                --name pomodoro-idserver `
-                --rm `
-                -d `
-                -p 2002:80 `
-                --network pomodoro-net `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/src/:/app/src/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/config/:/app/config/ `
-                pomodoro-idserver $Flags
+            Write-Host "Use Start-PomIdServer for more options"
+            Start-PomIdServer 
         }
         "watch-pomo-rapi" {
             Write-Host "Starting watch-pomo-rapi..."
@@ -219,9 +204,40 @@ Function Start-PomContainer {
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/ClientTools/src/:/app/src/ `
                 pomodoro-client
         }
+        "pomodoro-reverse-proxy" {
+            Write-Host "Use Start-PomReverse for more options"
+            Start-PomReverse -Client localmachine -NoProxy
+        }
         default {}
     }
 }
+
+
+Function Start-PomIdServer {
+    param(
+        [Parameter()]
+        [switch]$Attach
+    )
+
+    if (Test-PomMissing) { RETURN }
+
+    Write-Host "Starting pomodoro-idserver..."
+    $Flags = if ($Attach) { '--debug' } else { '' }
+    
+    # Cannot attach a debugger, but can have the app auto reload during development.
+    # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+    docker run `
+        --name pomodoro-idserver `
+        --rm `
+        -d `
+        -p 2002:80 `
+        --network pomodoro-net `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/src/:/app/src/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/secrets/:/app/secrets/ `
+        -v $env:POMODORO_REPOS/PersonalTracker.Api/IdServer/config/:/app/config/ `
+        pomodoro-idserver $Flags
+}
+
 
 Function Start-PomEnv {
 <#
@@ -859,6 +875,7 @@ Export-ModuleMember -Function Start-DockerBash
 Export-ModuleMember -Function Start-PomPgAdmin
 Export-ModuleMember -Function Start-PomContainer
 Export-ModuleMember -Function Start-PomContainerShell
+Export-ModuleMember -Function Start-PomIdServer
 Export-ModuleMember -Function Start-PomEnv
 Export-ModuleMember -Function Start-PomMountebank
 Export-ModuleMember -Function Start-PomReverse
