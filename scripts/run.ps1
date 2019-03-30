@@ -2,6 +2,8 @@
 
 $domain='http://localhost'
 
+#$domain='http://localhost:2002'
+
 #######################
 # Simple pomodoro controller
 #######################
@@ -101,7 +103,7 @@ Invoke-WebRequest `
 # Get authentication
 #######################
 
-Invoke-WebRequest `
+Invoke-RestMethod `
   -Method Get `
   -ContentType 'application/json' `
   -SkipCertificateCheck `
@@ -140,8 +142,6 @@ $values
 
 
 docker exec -it pomodoro-mountebank mb save --savefile gen_conf/imposters.json --removeProxies
-
-
 
 
 
