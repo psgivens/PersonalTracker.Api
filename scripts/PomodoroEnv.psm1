@@ -128,7 +128,12 @@ Function Start-PomContainer {
             "pomo-ping-rapi",
             "pomodoro-client"
         )] 
-        [string]$Container
+        [string]$Container,
+        [Parameter(
+            Mandatory=$false, 
+            HelpMessage="True if you want to use mountebank",
+            ParameterSetName="Individual")]
+        [switch]$Mock
     )
 
     if (Test-PomMissing) { RETURN }
@@ -170,9 +175,11 @@ Function Start-PomContainer {
                 --network pomodoro-net `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
                 pomodoro-watch-rapi
+
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+
         }
         "pomo-ping-rapi" {
             Write-Host "Starting pomo-ping-rapi..."
@@ -209,6 +216,50 @@ Function Start-PomContainer {
             Start-PomReverse -Client localmachine -NoProxy
         }
         default {}
+    }
+}
+
+
+
+Function Update-PomDatabase {
+    param(
+        [Parameter(
+            Mandatory=$true, 
+            HelpMessage="Containers not involved in proxy.",
+            ParameterSetName="Individual")]
+        [ValidateSet(
+            "pomodoro-idserver",
+            "watch-pomo-rapi",
+            "pomo-ping-rapi"
+        )] 
+        [string]$Container
+    )
+
+    if (Test-PomMissing) { RETURN }
+
+    switch ($Container) {
+        "pomodoro-idserver" {
+            Write-Host "Use Start-PomIdServer for more options"
+            Start-PomIdServer 
+        }
+        "watch-pomo-rapi" {
+            docker run `
+                --rm -it `
+                --network pomodoro-net `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/Migrations/:/app/Migrations/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+                --entrypoint dotnet `
+                pomodoro-watch-rapi ef database update
+        }
+        "pomo-ping-rapi" {
+            Write-Host "Container pomo-ping-rapi does not support database udpate"
+        }
+        default {
+            Write-Host "Container $Container does not support database udpate"
+        }
     }
 }
 
@@ -881,5 +932,6 @@ Export-ModuleMember -Function Start-PomMountebank
 Export-ModuleMember -Function Start-PomReverse
 Export-ModuleMember -Function Stop-PomEnv
 Export-ModuleMember -Function Stop-PomPgAdmin
+Export-ModuleMember -Function Update-PomDatabase 
 Export-ModuleMember -Function Update-PomModule
 Export-ModuleMember -Function Use-PomDirectory

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pomodoro.Api.Models;
@@ -9,9 +10,10 @@ using Pomodoro.Api.Models;
 namespace Pomodoro.Api.Migrations
 {
     [DbContext(typeof(PomodoroDbContext))]
-    partial class PomodoroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20190407173239_ActionItems_create")]
+    partial class ActionItems_create
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,11 +26,11 @@ namespace Pomodoro.Api.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<DateTime?>("CompletionDate");
+                    b.Property<DateTime>("CompletionDate");
 
                     b.Property<string>("Description");
 
-                    b.Property<DateTime?>("DueDate");
+                    b.Property<DateTime>("DueDate");
 
                     b.Property<DateTime>("Modified");
 

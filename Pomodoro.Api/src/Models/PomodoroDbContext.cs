@@ -11,5 +11,6 @@ namespace Pomodoro.Api.Models
         public virtual DbSet<PomodoroEntryModel> PomodoroEntries { get; set; }
         public virtual DbSet<PersonEntity> People { get; set; }
         public virtual DbSet<GroupEntity> Groups { get; set; }
+        public virtual DbSet<ActionItemModel> ActionItems { get; set; }
     }
 }

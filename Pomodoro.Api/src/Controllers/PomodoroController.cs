@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Pomodoro.Api.Models;
 using System.Collections.Generic;
 using System.Linq;
-using Pomodoro.Api.Models;
 using System.Threading.Tasks;
 using System;
 
 namespace Pomodoro.Api.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     public class PomodoroController : ControllerBase
     {
         private readonly PomodoroDbContext _context;
