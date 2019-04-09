@@ -178,7 +178,7 @@ $values = Invoke-RestMethod `
 $values
 
 
-docker exec -it pomodoro-mountebank mb save --savefile gen_conf/imposters.json --removeProxies
+#docker exec -it pomodoro-mountebank mb save --savefile gen_conf/imposters.json --removeProxies
 
 
 
@@ -218,9 +218,17 @@ $body = Invoke-RestMethod `
   -Headers $auth_headers `
   -SkipCertificateCheck `
   -Uri "$domain/api/actionitems"
+$body
 
 
-$body = @{
+# Invoke-WebRequest `
+#   -Method Delete `
+#   -Headers $auth_headers `
+#   -SkipCertificateCheck `
+#   -Uri "$domain/api/actionitems/1"
+
+
+$body = {
   UserId=$at.sub;
   Description="Some other action item"
 } | ConvertTo-Json

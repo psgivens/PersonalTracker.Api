@@ -23,11 +23,7 @@ namespace Pomodoro.Api.Controllers
                 _context.ActionItems.Add(new ActionItemModel
                 {
                     UserId = System.Guid.NewGuid().ToString(),
-                    // DueDate = System.DateTime.Now,
-                    // Modified = System.DateTime.Now,
                     Description = "Sample activity"
-                    // Tags = "",
-                    // State = ActionItemState.NotStarted
                 });
 
                 _context.SaveChanges();
@@ -35,13 +31,9 @@ namespace Pomodoro.Api.Controllers
         }
 
         [HttpGet]
-        public List<ActionItemModel> GetAll()
-        {
-            // return Enumerable
-            //     .Empty<ActionItemModel>()
-            //     .ToList();// _context.ActionItems.ToList();
-            return _context.ActionItems.ToList();
-        }
+        public List<ActionItemModel> GetAll() => 
+            _context.ActionItems.ToList();
+        
 
         [HttpGet("{id}", Name = "GetActionItem")]
         public async Task<ActionResult> GetByIdAsync(long id)
@@ -72,6 +64,24 @@ namespace Pomodoro.Api.Controllers
                 _context.ActionItems.Add(entry);
                 _context.SaveChanges();
                 return CreatedAtRoute("GetActionItem", new { id = entry.Id }, entry);
+            }
+            catch
+            {
+                Console.WriteLine("error");
+                throw;
+            }
+        }
+
+        [HttpDelete("{id}", Name = "Delete_Action Item")]
+        public async Task<ActionResult> DeleteActionItem(long id)
+        {
+            try
+            {
+                DateTime tempdt;
+                var entry = await _context.ActionItems.FindAsync(id);
+                _context.ActionItems.Remove(entry);
+                _context.SaveChanges();
+                return StatusCode(204);
             }
             catch
             {
