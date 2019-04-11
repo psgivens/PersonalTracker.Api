@@ -173,13 +173,12 @@ Function Start-PomContainer {
                 --rm -d `
                 -p 2003:80 `
                 --network pomodoro-net `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/ `
                 pomodoro-watch-rapi
 
                 # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
-
         }
         "pomo-ping-rapi" {
             Write-Host "Starting pomo-ping-rapi..."
@@ -246,11 +245,11 @@ Function Update-PomDatabase {
             docker run `
                 --rm -it `
                 --network pomodoro-net `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/Migrations/:/app/Migrations/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/src/:/app/src/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/Migrations/:/app/Migrations/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
                 -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
-                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro.Api/secrets/:/app/secrets/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/ `
                 --entrypoint dotnet `
                 pomodoro-watch-rapi ef database update
         }
@@ -579,8 +578,8 @@ Function Build-PomImage {
         "pomodoro-watch-rapi" {
             dkr build `
                 -t pomodoro-watch-rapi `
-                -f "$buildpath/Pomodoro.Api/watch.Dockerfile" `
-                "$buildpath/Pomodoro.Api"
+                -f "$buildpath/Pomodoro/Pomodoro.Api/watch.Dockerfile" `
+                "$buildpath/Pomodoro/Pomodoro.Api"
         }
         "pomodoro-idserver" {
             dkr build `
@@ -615,8 +614,8 @@ Function Build-PomImage {
         "pomodoro-rapi" {
             dkr build `
                 -t pomodoro-rapi `
-                -f "$buildpath/Pomodoro.Api/Dockerfile" `
-                "$buildpath/Pomodoro.Api"
+                -f "$buildpath/Pomodoro/Pomodoro.Api/Dockerfile" `
+                "$buildpath/Pomodoro/Pomodoro.Api"
         }
         "pomodoro-pgsql" {
             dkr build `

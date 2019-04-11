@@ -228,7 +228,7 @@ $body
 #   -Uri "$domain/api/actionitems/1"
 
 
-$body = {
+$body = @{
   UserId=$at.sub;
   Description="Some other action item"
 } | ConvertTo-Json
@@ -264,7 +264,7 @@ Invoke-WebRequest `
   -Headers $auth_headers `
   -ContentType 'application/json' `
   -SkipCertificateCheck `
-  -Uri "$domain/api/actionitems/5"
+  -Uri "$domain/api/actionitems/4"
 
 
 

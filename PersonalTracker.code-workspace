@@ -7,13 +7,13 @@
 			"path": "/home/psgivens/Repos/psgivens/PersonalTracker/webapp"
 		},
 		{
-			"path": "Pomodoro.Api"
-		},
-		{
 			"path": "docs"
 		},
 		{
 			"path": "scripts"
+		},
+		{
+			"path": "Pomodoro/Pomodoro.Api"
 		}
 	],
 	"settings": {}
