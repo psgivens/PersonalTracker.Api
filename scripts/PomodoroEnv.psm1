@@ -123,6 +123,9 @@ Function Start-PomContainer {
         [ValidateSet(
             "pomodoro-pgsql",
             "pomodoro-idserver",
+            "pomodoro-identity", 
+            "pomodoro-resource", 
+            "pomodoro-privilege", 
             "pomodoro-reverse-proxy",
             "watch-pomo-rapi",
             "pomo-ping-rapi",
@@ -164,7 +167,7 @@ Function Start-PomContainer {
         }
         "watch-pomo-rapi" {
             Write-Host "Starting watch-pomo-rapi..."
-            if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this image."; exit; }
 
             # Cannot attach a debugger, but can have the app auto reload during development.
             # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
@@ -180,6 +183,60 @@ Function Start-PomContainer {
 
                 # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
         }
+        "pomodoro-identity" {
+            Write-Host "Starting pomodoro-identity..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this image."; exit; }
+
+            # Cannot attach a debugger, but can have the app auto reload during development.
+            # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+            docker run `
+                --name pomodoro-identity `
+                --rm -d `
+                -p 2005:80 `
+                --network pomodoro-net `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdentityManagement/IdentityManagement.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdentityManagement/IdentityManagement.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/IdentityManagement/IdentityManagement.Api/secrets/:/app/secrets/ `
+                pomodoro-identity
+
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+        }
+        "pomodoro-resource"{
+            Write-Host "Starting pomodoro-resource..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this image."; exit; }
+
+            # Cannot attach a debugger, but can have the app auto reload during development.
+            # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+            docker run `
+                --name pomodoro-resource `
+                --rm -d `
+                -p 2003:80 `
+                --network pomodoro-net `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/ResourceManagement/ResourceManagement.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/ResourceManagement/ResourceManagement.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/ResourceManagement/ResourceManagement.Api/secrets/:/app/secrets/ `
+                pomodoro-resource
+
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+        }
+        "pomodoro-privilege"{
+            Write-Host "Starting pomodoro-privilege..."
+            if ($Attach) { Write-Host "'Attach' is not a valid switch with this image."; exit; }
+
+            # Cannot attach a debugger, but can have the app auto reload during development.
+            # https://github.com/dotnet/dotnet-docker/blob/master/samples/dotnetapp/dotnet-docker-dev-in-container.md
+            docker run `
+                --name pomodoro-privilege `
+                --rm -d `
+                -p 2003:80 `
+                --network pomodoro-net `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/PrivilegeManagement/PrivilegeManagement.Api/src/:/app/src/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/PrivilegeManagement/PrivilegeManagement.Api/wwwroot/:/app/wwwroot/ `
+                -v $env:POMODORO_REPOS/PersonalTracker.Api/PrivilegeManagement/PrivilegeManagement.Api/secrets/:/app/secrets/ `
+                pomodoro-privilege
+
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Mountebank/api_conf/:/app/config/ `
+        } 
         "pomo-ping-rapi" {
             Write-Host "Starting pomo-ping-rapi..."
             if ($Attach) { Write-Host "'Attach' is not a valid switch with this immage."; exit; }
@@ -547,6 +604,9 @@ Function Build-PomImage {
         [ValidateSet(
             "pomodoro-watch-rapi", 
             "pomodoro-idserver", 
+            "pomodoro-identity", 
+            "pomodoro-resource", 
+            "pomodoro-privilege", 
             "pomodoro-reverse-proxy", 
             "pomodoro-mountebank", 
             "pomodoro-pgsql",
@@ -555,7 +615,7 @@ Function Build-PomImage {
             "pomodoro-utils",
             "pomodoro-rapi",
             "pomodoro-ping-rapi",
-            "pomodoro-client"
+            "pomodoro-client"            
             )] 
         [string]$Image,
 
@@ -580,6 +640,24 @@ Function Build-PomImage {
                 -t pomodoro-watch-rapi `
                 -f "$buildpath/Pomodoro/Pomodoro.Api/watch.Dockerfile" `
                 "$buildpath/Pomodoro/Pomodoro.Api"
+        }
+        "pomodoro-identity" {
+            dkr build `
+                -t pomodoro-identity `
+                -f "$buildpath/IdentityManagement/IdentityManagement.Api/watch.Dockerfile" `
+                "$buildpath/IdentityManagement/IdentityManagement.Api"
+        }
+        "pomodoro-resource"{
+            dkr build `
+                -t pomodoro-resource `
+                -f "$buildpath/ResourceManagement/ResourceManagement.Api/watch.Dockerfile" `
+                "$buildpath/ResourceManagement/ResourceManagement.Api"
+        } 
+        "pomodoro-privilege"{
+            dkr build `
+                -t pomodoro-privilege `
+                -f "$buildpath/PrivilegeManagement/PrivilegeManagement.Api/watch.Dockerfile" `
+                "$buildpath/PrivilegeManagement/PrivilegeManagement.Api"
         }
         "pomodoro-idserver" {
             dkr build `

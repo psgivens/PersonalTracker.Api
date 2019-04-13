@@ -1,12 +1,44 @@
 
 
+
 @startuml
 
-title Thing
+Title Project Tracking Entities
+Project --* NextStep
+
+Project --* Deliverables
+
+NextStep <|-- ActionItem
+NextStep <|-- Timebox
+NextStep <|-- MeetingItem
+
+Person *-- NextStep
+
+Meeting *--* Person
+MeetingItem *-- Meeting
+
+Project : Last Updated
+Project : Next Update
+Project : Ticket
+Project : State
+Project : Labels
+Project : Owner
+Project : Description
+Project : Justification
+Project : Status
+
+Person : Name
+
+NextStep : Next Update
+
+Timebox : Alloted Time
+
+
+@enduml
+
 
 @startuml
 scale 600 width
-
 [*] -> State1
 State1 --> State2 : Succeeded
 State1 --> [*] : Aborted
@@ -22,7 +54,8 @@ state State3 {
 State3 --> State3 : Failed
 State3 --> [*] : Succeeded / Save Result
 State3 --> [*] : Aborted
- 
 @enduml
 
+@startuml
+title Thing
 @enduml

@@ -1,0 +1,6 @@
+{
+  "idServerSettings": {
+    "IssuerUri": "http://pomodoro-idserver",
+    "Authority": "http://pomodoro-idserver"
+  }
+}
