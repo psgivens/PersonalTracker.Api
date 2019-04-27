@@ -58,8 +58,8 @@ IdentityManagement : **Storage:** Event Sourcing
 IdentityManagement : **Actors:** Administrators, Users
 IdentityManagement : **Audience:** AccessControl, IdentityProvider
 IdentityManagement : ==
-IdentityManagement : person-profile #Editable
-IdentityManagement : person-group mapping #Editable
+IdentityManagement : user-profile #Editable
+IdentityManagement : user-group mapping #Editable
 IdentityManagement : group-group mapping #Editable
 IdentityManagement : --
 IdentityManagement : role-principle mapping #Editable
@@ -99,17 +99,45 @@ TenantManagement : tenant-privilege mapping #Editable
 @startuml
 title Data model
 
-Principal <|-- Person
-Principal <|-- Group
-Principal -* Role
-Role *-* Privilege 
-Privilege *-* Endpoint
+package IdentityManagement {
+    class "Role" as idrole
+    Principal <|-- Person
+    Principal <|-- Group
+    Principal -* idrole
+}
 
-Client *--* Scope
-Scope --* Resource
+package PrivilegeManagement {
+    class "Role" as privrole
+    privrole *-* Privilege 
+    Privilege *-* Endpoint
+    Endpoint -* DataConstraints
+}
 
+package ResourceManagement {
+    Client *-* Scope
+    Scope -* Resource
+}
+
+Resource --* Endpoint
+idrole -- privrole
 
 @enduml
 
+@startuml
+actor -> handler: Command
+handler -> eventstore: Get events
+handler <-- eventstore: events
+handler -> evolver: events
+handler <-- evolver: previous state
+note over handler
+    Side effects
+    Generate event
+end note
+handler -> evolver: new event
+handler <-- evolver: new state
+
+handler -> eventstore: event
+eventstore -> subscribers: Event
+@enduml
 
 
