@@ -947,10 +947,13 @@ Function Update-PomModule {
 
     $MyPSModulePath = "{0}/.local/share/powershell/Modules" -f (ls -d ~)
     mkdir -p $MyPSModulePath/PomodoroEnv
-    Write-Host ("Copying {0}/PersonalTracker.Api/scripts/PomodoroEnv.psm1 to {1}/PomodoroEnv/" -f $env:POMODORO_REPOS,  $MyPSModulePath)
-    cp -f $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/
+
+    Write-Host ("Linking {0}/PersonalTracker.Api/scripts/PomodoroEnv.psm1 to {1}/PomodoroEnv/" -f $env:POMODORO_REPOS,  $MyPSModulePath)
+    ln -s $env:POMODORO_REPOS/PersonalTracker.Api/scripts/PomodoroEnv.psm1  $MyPSModulePath/PomodoroEnv/PomodoroEnv.psm1
+
     Write-Host "Force import-module PomodorEnv"
     Import-Module -Force PomodoroEnv -Global
+
 }
 
 Function Initialize-PomEnv {

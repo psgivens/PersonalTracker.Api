@@ -3,7 +3,7 @@
 
 @startuml
 
-Title Project Tracking Entities
+Title Project Tracking Domain (old)
 Project --* NextStep
 
 Project --* Deliverables
@@ -38,6 +38,7 @@ Timebox : Alloted Time
 
 
 @startuml
+title Example taken from the internet
 scale 600 width
 [*] -> State1
 State1 --> State2 : Succeeded

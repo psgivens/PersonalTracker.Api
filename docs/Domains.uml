@@ -1,5 +1,6 @@
+
 @startuml 
-Title Domains
+Title IAM Domains
 
 IdentityProvider -- IdentityManagement
 IdentityProvider -- ResourceManagement
@@ -101,7 +102,7 @@ title Data model
 
 package IdentityManagement {
     class "Role" as idrole
-    Principal <|-- Person
+    Principal <|-- User
     Principal <|-- Group
     Principal -* idrole
 }
@@ -124,6 +125,7 @@ idrole -- privrole
 @enduml
 
 @startuml
+title Event Sourcing workflow
 actor -> handler: Command
 handler -> eventstore: Get events
 handler <-- eventstore: events
@@ -131,7 +133,7 @@ handler -> evolver: events
 handler <-- evolver: previous state
 note over handler
     Side effects
-    Generate event
+    Generate events
 end note
 handler -> evolver: new event
 handler <-- evolver: new state
