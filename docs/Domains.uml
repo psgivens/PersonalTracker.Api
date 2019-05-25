@@ -107,7 +107,7 @@ package IdentityManagement {
     Principal -* idrole
 }
 
-package PrivilegeManagement {
+package EndpointControlManagement {
     class "Role" as privrole
     privrole *-* Privilege 
     Privilege *-* Endpoint
@@ -143,3 +143,40 @@ eventstore -> subscribers: Event
 @enduml
 
 
+@startuml
+title IdentityManagement-to-IdentityServer
+actor User as user
+
+box "IdentityManagement"
+    boundary WWW as www
+    control "Event Source\nAggregate" as es
+    control "Publisher" as publish
+    entity "a group" as group
+end box
+
+box "Authentication Server"
+    participant "Identity Server" as idserver
+end box
+
+activate group
+activate idserver
+group Authenticated User
+user -> www: Update group\n(DTO)
+activate www
+end group
+www -> es: Update group\n(Command)
+deactivate www
+activate es
+es -> group: changes applied
+es -> publish: Group updated\n(Event)
+deactivate es
+activate publish
+publish -> idserver: Group updated\n(Event)
+deactivate publish
+group OAuth2: Client Credentials
+    group <- idserver: GetState\n(Query)
+    group --> idserver
+end
+deactivate group
+deactivate idserver
+@enduml
