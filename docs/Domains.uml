@@ -98,7 +98,7 @@ TenantManagement : tenant-privilege mapping #Editable
 @enduml
 
 @startuml
-title Data model
+title Data model (alt 1: logical)
 
 package IdentityManagement {
     class "Role" as idrole
@@ -109,18 +109,82 @@ package IdentityManagement {
 
 package EndpointControlManagement {
     class "Role" as privrole
+    class "Resource" as epresource
     privrole *-* Privilege 
     Privilege *-* Endpoint
     Endpoint -* DataConstraints
+    Endpoint *-- epresource 
 }
 
 package ResourceManagement {
+    class "Resource" as rsresource
     Client *-* Scope
-    Scope -* Resource
+    Scope *--* rsresource
 }
 
-Resource --* Endpoint
-idrole -- privrole
+rsresource - epresource
+idrole - privrole
+
+@enduml
+
+@startuml
+title Data model (alt 2: simplified)
+
+package IdentityManagement {
+    class "Role" as idrole
+    Principal <|-- User
+    Principal <|-- Group
+    Principal -* idrole
+}
+
+package ResourceManagement {
+    class "Role" as privrole
+    idrole - privrole
+    privrole *-* Privilege 
+    
+    Privilege *-* Endpoint
+    Endpoint -* DataConstraints
+    Endpoint *-- Resource 
+    Client *-* Scope
+    Scope *--* Resource
+    
+}
+
+
+@enduml
+
+@startuml
+title Data model (alt 3: dynamic roles)
+
+package IdentityManagement {
+    class "Role" as idrole
+    Principal <|-- User
+    Principal <|-- Group
+    Principal -* idrole
+}
+
+package Architect {
+    class "Resource" as epresource
+    Client *-* Scope
+    Scope *-* epresource
+}
+
+package ResourceManagement {
+    class "Resources" as resource
+    Endpoint -* DataConstraints
+    Privilege *-* Endpoint
+    resource --* Endpoint
+}
+
+package AccessControlManagement {
+    class "Role" as eprole
+    class "Privilege" as eppriv
+    eprole *-* eppriv 
+}
+
+idrole -- eprole
+epresource - resource
+eppriv - Privilege 
 
 @enduml
 
