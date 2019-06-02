@@ -1,4 +1,16 @@
 
+
+@startuml
+
+title Application Domains
+
+Projects -- Orgs
+Meetings -- Orgs
+Projects - Meetings
+Projects -- Timeblock
+
+@enduml
+
 @startuml 
 Title Project Management
 
