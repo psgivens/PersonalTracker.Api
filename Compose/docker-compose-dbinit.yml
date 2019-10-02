@@ -1,0 +1,31 @@
+version: '3'
+services:
+  pomodoro-pgsql:
+    image: pomodoro-pgsql
+    volumes:
+      - pomodoro-pgsql-volume:/var/lib/postgresql/data/pgdata
+    networks:
+      - pomodoro-net
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=Password1
+      - POSTGRES_USER=samplesam
+      - POSTGRES_DB=defaultdb
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+  watch-pomo-rapi:
+    image: pomodoro-watch-rapi
+    networks:
+      - pomodoro-net
+    volumes:
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/Migrations/:/app/Migrations/
+      # - ${POMODORO_REPOS}/PersonalTracker.Api/Mountebank/api_conf/:/app/config/
+    entrypoint: dotnet ef database update
+volumes:
+  pomodoro-pgsql-volume:
+networks:
+  pomodoro-net:

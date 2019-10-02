@@ -23,7 +23,8 @@ namespace Pomodoro.Api
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
-                // .UseUrls("http://localhost/")
+                .UseUrls("http://0.0.0.0:8003")
+                // .UseUrls("http://localhost:8003")
                 .Build();
     }
 }

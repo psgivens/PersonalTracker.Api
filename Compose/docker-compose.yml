@@ -1,0 +1,64 @@
+version: '3'
+services:
+
+                #   --name pomodoro-pgsql `
+                # --mount source=pomodoro-pgsql-volume,target=/var/lib/postgresql/data/pgdata `
+                # --network pomodoro-net `
+                # --rm `
+                # -p 5432:5432 `
+                # -e POSTGRES_PASSWORD=Password1 `
+                # -e POSTGRES_USER=samplesam `
+                # -e POSTGRES_DB=defaultdb `
+                # -e PGDATA=/var/lib/postgresql/data/pgdata `
+                # -d `
+                # pomodoro-pgsql 
+
+  pomodoro-pgsql:
+    image: pomodoro-pgsql
+    volumes:
+      - pomodoro-pgsql-volume:/var/lib/postgresql/data/pgdata
+    networks:
+      - pomodoro-net
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=Password1
+      - POSTGRES_USER=samplesam
+      - POSTGRES_DB=defaultdb
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+
+                #       --name watch-pomo-rapi `
+                # --rm -d `
+                # -p 2003:80 `
+                # --network pomodoro-net `
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/ `
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
+                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/ `
+                # pomodoro-watch-rapi
+
+  watch-pomo-rapi:
+    image: pomodoro-watch-rapi
+    networks:
+      - pomodoro-net
+    ports:
+      - 2003:8003
+    volumes:
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/
+      - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/
+
+  # web:
+  #   build: .
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - data-volume:/var/lib/db
+  # redis:
+  #   image: "redis:alpine"
+
+volumes:
+  data-volume:
+  pomodoro-pgsql-volume:
+networks:
+  pomodoro-net:
