@@ -1,0 +1,57 @@
+admin:
+  access_log_path: /tmp/admin_access.log
+  address:
+    socket_address:
+      protocol: TCP
+      address: 0.0.0.0
+      port_value: 9901
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        protocol: TCP
+        address: 0.0.0.0
+        port_value: 2081
+    filter_chains:
+    - filters:
+      - name: envoy.http_connection_manager
+        config:
+          codec_type: auto
+          stat_prefix: ingress_http
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/api"
+                route:
+                  cluster: pomodoro_rapi
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: static_web
+          http_filters:
+          - name: envoy.router
+  clusters:
+  - name: pomodoro_rapi
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: ROUND_ROBIN
+    hosts:
+    - socket_address:
+        address: compose_watch-pomo-rapi_1
+        port_value: 8003
+  
+  - name: static_web
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: ROUND_ROBIN
+    hosts:
+    - socket_address:
+        address: localmachine
+        port_value: 3000
+
+

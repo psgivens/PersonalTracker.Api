@@ -6,6 +6,8 @@ services:
       - pomodoro-pgsql-volume:/var/lib/postgresql/data/pgdata
     networks:
       - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
     ports:
       - 5432:5432
     environment:
@@ -18,6 +20,8 @@ services:
     image: pomodoro-watch-rapi
     networks:
       - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
     volumes:
       - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/
       - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/
@@ -25,7 +29,15 @@ services:
       - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/Migrations/:/app/Migrations/
       # - ${POMODORO_REPOS}/PersonalTracker.Api/Mountebank/api_conf/:/app/config/
     entrypoint: dotnet ef database update
+
 volumes:
   pomodoro-pgsql-volume:
 networks:
   pomodoro-net:
+networks:
+  pomodoro-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.31.1.0/24"

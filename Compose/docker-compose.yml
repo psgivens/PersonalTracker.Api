@@ -1,24 +1,13 @@
 version: '3'
 services:
-
-                #   --name pomodoro-pgsql `
-                # --mount source=pomodoro-pgsql-volume,target=/var/lib/postgresql/data/pgdata `
-                # --network pomodoro-net `
-                # --rm `
-                # -p 5432:5432 `
-                # -e POSTGRES_PASSWORD=Password1 `
-                # -e POSTGRES_USER=samplesam `
-                # -e POSTGRES_DB=defaultdb `
-                # -e PGDATA=/var/lib/postgresql/data/pgdata `
-                # -d `
-                # pomodoro-pgsql 
-
   pomodoro-pgsql:
     image: pomodoro-pgsql
     volumes:
       - pomodoro-pgsql-volume:/var/lib/postgresql/data/pgdata
     networks:
       - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
     ports:
       - 5432:5432
     environment:
@@ -27,20 +16,12 @@ services:
       - POSTGRES_DB=defaultdb
       - PGDATA=/var/lib/postgresql/data/pgdata
 
-
-                #       --name watch-pomo-rapi `
-                # --rm -d `
-                # -p 2003:80 `
-                # --network pomodoro-net `
-                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/src/:/app/src/ `
-                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/ `
-                # -v $env:POMODORO_REPOS/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/ `
-                # pomodoro-watch-rapi
-
   watch-pomo-rapi:
     image: pomodoro-watch-rapi
     networks:
       - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
     ports:
       - 2003:8003
     volumes:
@@ -48,17 +29,33 @@ services:
       - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/wwwroot/:/app/wwwroot/
       - ${POMODORO_REPOS}/PersonalTracker.Api/Pomodoro/Pomodoro.Api/secrets/:/app/secrets/
 
-  # web:
-  #   build: .
-  #   ports:
-  #     - "5000:5000"
-  #   volumes:
-  #     - data-volume:/var/lib/db
-  # redis:
-  #   image: "redis:alpine"
+  router-reverse-proxy:
+    image: envoyproxy/envoy:latest
+    networks:
+      - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
+    ports:
+      - 81:2081
+    volumes:
+      - ${POMODORO_REPOS}/PersonalTracker.Api/envoyproxy/:/etc/envoy/
+
+
+
+  utils:
+    image: pomodoro-utils
+    networks:
+      - pomodoro-net
+    extra_hosts:
+      - localmachine:172.31.1.1
+    entrypoint: /bin/sleep 5h
 
 volumes:
-  data-volume:
   pomodoro-pgsql-volume:
 networks:
   pomodoro-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.31.1.0/24"
